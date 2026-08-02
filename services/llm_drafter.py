@@ -184,6 +184,7 @@ def generate_cold_email(
     sender_name: str, github_url: str, portfolio_url: str, linkedin_url: str = "",
 ) -> EmailDraftResponse:
     """Generate a cold outreach email (no JD, just reaching out)."""
+    sender_name = sender_name.strip() if sender_name else "[Your Name]"
     links = []
     if portfolio_url: links.append(f"Portfolio: {portfolio_url}")
     if github_url: links.append(f"GitHub: {github_url}")
@@ -201,14 +202,14 @@ RULES:
 
 EMAIL FORMAT:
 Start with "Dear [HR Name / Hiring Manager],"
-Write the body paragraphs.
+Write the body paragraphs. 
 End the body text abruptly. DO NOT include a sign-off like "Best regards" or the sender's name.
 
 Return ONLY a JSON object:
 - "hiring_manager_name": "Hiring Manager"
 - "company_name": company name or "the company"
 - "subject": compelling subject line
-- "body": the full email body following the format above (use \n for line breaks)
+- "body": the full email body text. VERY IMPORTANT: DO NOT use HTML tags like <br> or <p>. Use literal newline characters (\n) for line breaks.
 
 RESUME:
 {resume_text[:3000]}"""
@@ -231,6 +232,7 @@ def generate_jd_email(
     sender_name: str, github_url: str, portfolio_url: str, linkedin_url: str = "",
 ) -> EmailDraftResponse:
     """Generate an application email based on a specific job description."""
+    sender_name = sender_name.strip() if sender_name else "[Your Name]"
     links = []
     if portfolio_url: links.append(f"Portfolio: {portfolio_url}")
     if github_url: links.append(f"GitHub: {github_url}")
@@ -255,7 +257,7 @@ Return ONLY a JSON object:
 - "hiring_manager_name": HR name if known, else "Hiring Manager"
 - "company_name": "{company_name}"
 - "subject": compelling subject line mentioning the role
-- "body": the full email body following the format above (use \n for line breaks)
+- "body": the full email body text. VERY IMPORTANT: DO NOT use HTML tags like <br> or <p>. Use literal newline characters (\n) for line breaks.
 
 RESUME:
 {resume_text[:3000]}
@@ -278,6 +280,7 @@ JOB DESCRIPTION:
 
 def rewrite_email(original_body: str, app_type: str, company: str, resume_text: str, new_angle: str, sender_name: str = "", github_url: str = "", portfolio_url: str = "", linkedin_url: str = "") -> str:
     """Rewrite email with a new angle or phrasing."""
+    sender_name = sender_name.strip() if sender_name else "[Your Name]"
     links = []
     if portfolio_url: links.append(f"Portfolio: {portfolio_url}")
     if github_url: links.append(f"GitHub: {github_url}")
@@ -294,6 +297,7 @@ def rewrite_email(original_body: str, app_type: str, company: str, resume_text: 
 {angle_instruction}
 Do NOT just swap synonyms. Construct a completely fresh cold outreach email.
 Keep it professional, highly personalized, and concise.
+DO NOT use HTML tags like <br>. Use literal newline characters for spacing.
 
 Resume Context:
 {resume_text[:2000]}
@@ -307,6 +311,7 @@ Return ONLY the rewritten email body text. No subject line. No explanations."""
 {angle_instruction}
 Acknowledge briefly that you applied earlier and are following up, but pivot the focus to this new angle.
 Keep it punchy, professional, and short.
+DO NOT use HTML tags like <br>. Use literal newline characters for spacing.
 
 Resume Context:
 {resume_text[:2000]}
@@ -327,6 +332,7 @@ Return ONLY the rewritten email body text. No subject line. No explanations."""
 
 def generate_follow_up(original_body: str, company: str, hr_name: str, sender_name: str = "", github_url: str = "", portfolio_url: str = "", linkedin_url: str = "") -> str:
     """Generate a polite follow-up email."""
+    sender_name = sender_name.strip() if sender_name else "[Your Name]"
     links = []
     if portfolio_url: links.append(f"Portfolio: {portfolio_url}")
     if github_url: links.append(f"GitHub: {github_url}")
@@ -336,7 +342,8 @@ def generate_follow_up(original_body: str, company: str, hr_name: str, sender_na
 Context: I previously emailed {hr_name} at {company} about a job opportunity.
 My original email: {original_body[:500]}
 
-Return ONLY the follow-up text. No placeholders, no subject line. Sound human and genuine."""
+Return ONLY the follow-up text. No placeholders, no subject line. Sound human and genuine.
+DO NOT use HTML tags like <br>. Use literal newline characters for spacing."""
     result_body = call_gemini(prompt, json_mode=False, temperature=0.4).strip()
     
     signature = f"\n\nBest regards,\n{sender_name}" if sender_name else ""
