@@ -92,6 +92,10 @@ class FollowUpRequest(BaseModel):
     original_body: str
     company: str
     hr_name: str = "Hiring Manager"
+    sender_name: str = ""
+    github_url: str = ""
+    portfolio_url: str = ""
+    linkedin_url: str = ""
 
 class RewriteRequest(BaseModel):
     original_body: str
@@ -99,6 +103,10 @@ class RewriteRequest(BaseModel):
     company: str = ""
     resume_text: str = ""
     new_angle: str = ""
+    sender_name: str = ""
+    github_url: str = ""
+    portfolio_url: str = ""
+    linkedin_url: str = ""
 
 class SendEmailRequest(BaseModel):
     to_email: str
@@ -348,7 +356,10 @@ async def gen_poster(
 @app.post("/api/generate/followup")
 def gen_followup(req: FollowUpRequest):
     try:
-        text = generate_follow_up(req.original_body, req.company, req.hr_name)
+        text = generate_follow_up(
+            req.original_body, req.company, req.hr_name,
+            req.sender_name, req.github_url, req.portfolio_url, req.linkedin_url
+        )
         return {"body": text}
     except Exception as e:
         raise HTTPException(500, str(e))
@@ -361,7 +372,11 @@ def gen_rewrite(req: RewriteRequest):
             app_type=req.app_type,
             company=req.company,
             resume_text=req.resume_text,
-            new_angle=req.new_angle
+            new_angle=req.new_angle,
+            sender_name=req.sender_name,
+            github_url=req.github_url,
+            portfolio_url=req.portfolio_url,
+            linkedin_url=req.linkedin_url
         )
         return {"body": text}
     except Exception as e:

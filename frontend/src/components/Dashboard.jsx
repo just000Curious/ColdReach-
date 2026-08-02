@@ -21,7 +21,7 @@ const KH_CLASS = {
 };
 const CADENCE = [3, 7, 14];
 
-export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, resumeText }) {
+export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, resumeText, profile }) {
   const [expandedId, setExpandedId] = useState(null);
   const [editState, setEditState] = useState({});
   const [loading, setLoading] = useState({});
@@ -124,6 +124,10 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
         original_body: e.body,
         company: app.company,
         hr_name: "Hiring Manager",
+        sender_name: profile?.name || "",
+        github_url: profile?.github || "",
+        portfolio_url: profile?.portfolio || "",
+        linkedin_url: profile?.linkedin || "",
       });
       await sendEmail({ to_email: e.email, subject: `Re: ${e.subject}`, body: fuBody, attach_resume: true });
       await updateApplication(app.id, {
@@ -149,7 +153,11 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
         app_type: app.type, 
         company: app.company, 
         resume_text: resumeText,
-        new_angle: newAngle 
+        new_angle: newAngle,
+        sender_name: profile?.name || "",
+        github_url: profile?.github || "",
+        portfolio_url: profile?.portfolio || "",
+        linkedin_url: profile?.linkedin || "",
       });
       await sendEmail({ to_email: e.email, subject: e.subject, body: newBody, attach_resume: true });
       await updateApplication(app.id, { body: newBody, sent_at: new Date().toISOString() });

@@ -122,7 +122,7 @@ export default function App() {
             <FromPoster profile={activeProfile} resumeText={resumeText} onDraftCreated={handleDraftCreated} toast={toast} setGlobalLoading={setGlobalLoading} />
           )}
           {activeTab === "dash" && (
-            <Dashboard apps={apps} onRefresh={loadApps} toast={toast} setGlobalLoading={setGlobalLoading} resumeText={resumeText} />
+            <Dashboard apps={apps} onRefresh={loadApps} toast={toast} setGlobalLoading={setGlobalLoading} resumeText={resumeText} profile={activeProfile} />
           )}
           {activeTab === "settings" && (
             <Settings resumeReady={resumeReady} setResumeReady={setResumeReady} setResumeText={setResumeText} toast={toast} />

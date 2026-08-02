@@ -179,9 +179,11 @@ def generate_cold_email(
     sender_name: str, github_url: str, portfolio_url: str, linkedin_url: str = "",
 ) -> EmailDraftResponse:
     """Generate a cold outreach email (no JD, just reaching out)."""
-    github_line = f"GitHub: {github_url}" if github_url else ""
-    portfolio_line = f"Portfolio: {portfolio_url}" if portfolio_url else ""
-    linkedin_line = f"LinkedIn: {linkedin_url}" if linkedin_url else ""
+    links = []
+    if portfolio_url: links.append(f"Portfolio: {portfolio_url}")
+    if github_url: links.append(f"GitHub: {github_url}")
+    if linkedin_url: links.append(f"LinkedIn: {linkedin_url}")
+    links_str = " | ".join(links)
 
     prompt = f"""You are an expert career outreach assistant. Write a cold outreach email to an HR manager.
 
@@ -192,18 +194,10 @@ RULES:
 4. Target Role: {target_role if target_role else "General inquiry"}
 5. Company context: {company_info if company_info else "No specific company info provided"}
 
-EMAIL FORMAT (follow this structure strictly):
-Line 1: "Dear [HR Name / Hiring Manager],"
-Line 2: (blank line)
-Line 3-5: Opening paragraph — who you are and why you're reaching out.
-Line 6: (blank line)
-Line 7-9: Second paragraph — your key relevant skills/experience (from resume only).
-Line 10: (blank line)
-Line 11-12: Closing line — call to action (e.g., happy to discuss further).
-Line 13: (blank line)
-Line 14: "Best regards,"
-Line 15: "{sender_name}"
-Line 16: Links: {github_line} | {portfolio_line} | {linkedin_line} (only include non-empty ones)
+EMAIL FORMAT:
+Start with "Dear [HR Name / Hiring Manager],"
+Write the body paragraphs.
+End the body text abruptly. DO NOT include a sign-off like "Best regards" or the sender's name.
 
 Return ONLY a JSON object:
 - "hiring_manager_name": "Hiring Manager"
@@ -216,6 +210,14 @@ RESUME:
 
     result = call_gemini(prompt, json_mode=True, temperature=0.3)
     data = json.loads(result)
+    
+    # Programmatically append the signature
+    body = data.get("body", "").strip()
+    signature = f"\n\nBest regards,\n{sender_name}"
+    if links_str:
+        signature += f"\n{links_str}"
+    
+    data["body"] = body + signature
     return EmailDraftResponse(**data)
 
 
@@ -224,9 +226,11 @@ def generate_jd_email(
     sender_name: str, github_url: str, portfolio_url: str, linkedin_url: str = "",
 ) -> EmailDraftResponse:
     """Generate an application email based on a specific job description."""
-    github_line = f"GitHub: {github_url}" if github_url else ""
-    portfolio_line = f"Portfolio: {portfolio_url}" if portfolio_url else ""
-    linkedin_line = f"LinkedIn: {linkedin_url}" if linkedin_url else ""
+    links = []
+    if portfolio_url: links.append(f"Portfolio: {portfolio_url}")
+    if github_url: links.append(f"GitHub: {github_url}")
+    if linkedin_url: links.append(f"LinkedIn: {linkedin_url}")
+    links_str = " | ".join(links)
 
     prompt = f"""You are an expert career outreach assistant. Write a job application email.
 
@@ -237,18 +241,10 @@ RULES:
 4. Job Title: {job_title}
 5. Company: {company_name}
 
-EMAIL FORMAT (follow this structure strictly):
-Line 1: "Dear [HR Name / Hiring Manager],"
-Line 2: (blank line)
-Line 3-5: Opening paragraph — express interest in the specific role and where you found it.
-Line 6: (blank line)
-Line 7-10: Second paragraph — highlight 2-3 specific skills/experiences from the resume that match the JD requirements.
-Line 11: (blank line)
-Line 12-13: Closing — mention attached resume and availability for a discussion.
-Line 14: (blank line)
-Line 15: "Best regards,"
-Line 16: "{sender_name}"
-Line 17: Links: {github_line} | {portfolio_line} | {linkedin_line} (only include non-empty ones)
+EMAIL FORMAT:
+Start with "Dear [HR Name / Hiring Manager],"
+Write the body paragraphs highlighting 2-3 specific skills matching the JD.
+End the body text abruptly. DO NOT include a sign-off like "Best regards" or the sender's name.
 
 Return ONLY a JSON object:
 - "hiring_manager_name": HR name if known, else "Hiring Manager"
@@ -264,11 +260,24 @@ JOB DESCRIPTION:
 
     result = call_gemini(prompt, json_mode=True, temperature=0.2)
     data = json.loads(result)
+    
+    # Programmatically append the signature
+    body = data.get("body", "").strip()
+    signature = f"\n\nBest regards,\n{sender_name}"
+    if links_str:
+        signature += f"\n{links_str}"
+    
+    data["body"] = body + signature
     return EmailDraftResponse(**data)
 
 
-def rewrite_email(original_body: str, app_type: str, company: str, resume_text: str, new_angle: str) -> str:
+def rewrite_email(original_body: str, app_type: str, company: str, resume_text: str, new_angle: str, sender_name: str = "", github_url: str = "", portfolio_url: str = "", linkedin_url: str = "") -> str:
     """Rewrite email with a new angle or phrasing."""
+    links = []
+    if portfolio_url: links.append(f"Portfolio: {portfolio_url}")
+    if github_url: links.append(f"GitHub: {github_url}")
+    if linkedin_url: links.append(f"LinkedIn: {linkedin_url}")
+    links_str = " | ".join(links)
     
     if new_angle:
         angle_instruction = f"The user requested this specific new angle/focus for the rewrite: '{new_angle}'. Ensure this is central to the new draft."
@@ -302,14 +311,31 @@ Original Email:
 
 Return ONLY the rewritten email body text. No subject line. No explanations."""
 
-    return call_gemini(prompt, json_mode=False, temperature=0.7)
+    result_body = call_gemini(prompt, json_mode=False, temperature=0.7).strip()
+    
+    signature = f"\n\nBest regards,\n{sender_name}" if sender_name else ""
+    if links_str:
+        signature += f"\n{links_str}"
+        
+    return result_body + signature
 
 
-def generate_follow_up(original_body: str, company: str, hr_name: str) -> str:
+def generate_follow_up(original_body: str, company: str, hr_name: str, sender_name: str = "", github_url: str = "", portfolio_url: str = "", linkedin_url: str = "") -> str:
     """Generate a polite follow-up email."""
+    links = []
+    if portfolio_url: links.append(f"Portfolio: {portfolio_url}")
+    if github_url: links.append(f"GitHub: {github_url}")
+    if linkedin_url: links.append(f"LinkedIn: {linkedin_url}")
+    links_str = " | ".join(links)
     prompt = f"""Write a short, polite 2-3 sentence follow-up email.
 Context: I previously emailed {hr_name} at {company} about a job opportunity.
 My original email: {original_body[:500]}
 
 Return ONLY the follow-up text. No placeholders, no subject line. Sound human and genuine."""
-    return call_gemini(prompt, json_mode=False, temperature=0.4)
+    result_body = call_gemini(prompt, json_mode=False, temperature=0.4).strip()
+    
+    signature = f"\n\nBest regards,\n{sender_name}" if sender_name else ""
+    if links_str:
+        signature += f"\n{links_str}"
+        
+    return result_body + signature
