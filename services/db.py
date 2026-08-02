@@ -13,6 +13,24 @@ _DATA_DIR = os.path.join(os.path.dirname(_DIR))  # linkedin-auto-apply/
 DB_FILE = os.path.join(_DATA_DIR, "applications.json")
 PROFILE_FILE = os.path.join(_DATA_DIR, "profile.json")
 RESUME_FILE = os.path.join(_DATA_DIR, "saved_resume.pdf")
+USAGE_FILE = os.path.join(_DATA_DIR, "usage.json")
+
+def get_token_usage() -> int:
+    if not os.path.exists(USAGE_FILE):
+        return 0
+    try:
+        with open(USAGE_FILE, "r") as f:
+            return json.load(f).get("tokens", 0)
+    except:
+        return 0
+
+def add_token_usage(tokens: int) -> None:
+    current = get_token_usage()
+    try:
+        with open(USAGE_FILE, "w") as f:
+            json.dump({"tokens": current + tokens}, f)
+    except:
+        pass
 
 
 def load_profiles_data() -> Dict[str, Any]:

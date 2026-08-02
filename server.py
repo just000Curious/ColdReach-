@@ -11,7 +11,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import Optional
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -28,7 +28,7 @@ load_dotenv(override=True)
 from services.db import (
     get_applications, add_application, update_application, delete_application,
     save_resume_to_disk, load_resume_from_disk,
-    is_valid_email, bulk_delete_by_status,
+    is_valid_email, bulk_delete_by_status, get_token_usage
 )
 from services.resume_parser import parse_resume
 from services.llm_drafter import (
@@ -311,13 +311,13 @@ def gen_jd(req: JDRequest):
 @app.post("/api/generate/poster")
 async def gen_poster(
     file: UploadFile = File(...),
-    resume_text: str = "",
-    sender_name: str = "",
-    github_url: str = "",
-    portfolio_url: str = "",
-    linkedin_url: str = "",
-    override_email: str = "",
-    override_title: str = "",
+    resume_text: str = Form(""),
+    sender_name: str = Form(""),
+    github_url: str = Form(""),
+    portfolio_url: str = Form(""),
+    linkedin_url: str = Form(""),
+    override_email: str = Form(""),
+    override_title: str = Form(""),
 ):
     try:
         img_bytes = await file.read()
@@ -417,6 +417,7 @@ def system_status():
         ),
         "email_address": os.environ.get("EMAIL_SENDER_ADDRESS", "").strip('" '),
         "resume_exists": load_resume_from_disk() is not None,
+        "total_tokens": get_token_usage()
     }
 
 

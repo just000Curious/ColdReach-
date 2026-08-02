@@ -4,6 +4,7 @@ import re
 import time
 import base64
 import requests
+from services.db import add_token_usage
 
 
 class EmailDraftResponse:
@@ -64,6 +65,8 @@ def call_gemini(prompt: str, json_mode: bool = False, temperature: float = 0.2) 
                 continue
             response.raise_for_status()
             data = response.json()
+            if "usageMetadata" in data:
+                add_token_usage(data["usageMetadata"].get("totalTokenCount", 0))
             raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
             return _strip_markdown_fences(raw_text)
         except requests.exceptions.Timeout:
@@ -107,6 +110,8 @@ def call_gemini_vision(prompt: str, image_bytes: bytes, json_mode: bool = False)
                 continue
             response.raise_for_status()
             data = response.json()
+            if "usageMetadata" in data:
+                add_token_usage(data["usageMetadata"].get("totalTokenCount", 0))
             raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
             return _strip_markdown_fences(raw_text)
         except requests.exceptions.Timeout:

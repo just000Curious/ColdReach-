@@ -75,6 +75,12 @@ export default function Settings({ resumeReady, setResumeReady, setResumeText, t
               {resumeReady ? <span style={{ color: "var(--green)" }}>Uploaded</span> : <span style={{ color: "var(--red)" }}>Missing</span>}
             </div>
           </div>
+          <div className="metric">
+            <div className="metric-label">Tokens Used</div>
+            <div className="metric-value">
+              <span style={{ color: "var(--brand)" }}>{status.total_tokens ? status.total_tokens.toLocaleString() : "0"}</span>
+            </div>
+          </div>
         </div>
 
         {/* Resume */}
