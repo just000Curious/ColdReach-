@@ -1,0 +1,32 @@
+[
+    {
+        "id": "df23e17b",
+        "type": "Cold Email",
+        "company": "the company",
+        "role": "any role ",
+        "email": "bhosaleabhishek0511@gmail.com",
+        "subject": "AI & Data Science Graduate - Abhishek Bhosale",
+        "body": "Dear Hiring Manager,\n\nI am writing to you as Abhishek Bhosale, an AI & Data Science graduate, to convey my strong interest in exploring prospective roles within your organization. I am particularly eager to leverage my machine learning and data engineering capabilities in a dynamic environment like yours.\n\nMy professional background includes practical experience in the development and deployment of machine learning applications, the refinement of predictive models, and the construction of robust backend data systems. Specifically, my technical proficiencies cover MLOps pipelines utilizing Docker and MLflow, API development with FastAPI, and comprehensive SQL database management.\n\nI would appreciate the chance to elaborate on how my specialized technical skills can benefit your team's objectives. For your consideration, my resume is enclosed.\n\nSincerely,\nAbhishek Bhosale\nLinks: GitHub: https://github.com/just000Curious | Portfolio: https://abhishek-bhosale.vercel.app/ | LinkedIn: https://www.linkedin.com/in/abhishek-sambhaji-bhosale/",
+        "status": "Sent",
+        "follow_up_days": 3,
+        "follow_up_count": 0,
+        "created_at": "2026-08-02T23:32:46.957225",
+        "sent_at": "2026-08-02T18:03:32.311Z",
+        "follow_up_sent_at": null
+    },
+    {
+        "id": "60d175b5",
+        "type": "Job Application",
+        "company": "NEXTASTRA",
+        "role": "JR.AI/ML ENGINEER",
+        "email": "careers@nextastra.com",
+        "subject": "Application for JR.AI/ML ENGINEER - Immediate Joiner",
+        "body": "Dear Hiring Manager,\n\nI am writing to express my enthusiastic interest in the JR.AI/ML ENGINEER position at NEXTASTRA, which I discovered on your careers page. I am eager to contribute to an innovative team.\n\nAs an immediate joiner, I am keen to apply my dedication and learn within NEXTASTRA's dynamic environment. My enthusiasm for AI/ML and readiness to contribute align well with the requirements for this entry-level position, where I am eager to develop practical skills.\n\nMy resume is attached for your review, and I am available for an interview at your earliest convenience.\n\nBest regards,\n\n\nLinks:  |  |",
+        "status": "Draft",
+        "follow_up_days": 3,
+        "follow_up_count": 0,
+        "created_at": "2026-08-03T00:04:13.801617",
+        "sent_at": null,
+        "follow_up_sent_at": null
+    }
+]

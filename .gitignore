@@ -1,0 +1,34 @@
+# Environment and Secrets
+.env
+*.env
+.env.*
+! .env.example
+
+# Data files (SQLite, JSON profiles, uploaded resumes)
+*.sqlite
+*.sqlite3
+profiles.json
+*.pdf
+data/
+*.tmp
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+venv/
+env/
+.venv/
+
+# Node / Frontend
+node_modules/
+dist/
+dist-ssr/
+npm-debug.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
