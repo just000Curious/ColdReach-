@@ -36,12 +36,12 @@
         "role": "any",
         "email": "bhosaleabhishek0511@gmail.com",
         "subject": "Proactive AI/ML Developer for the company",
-        "body": "Dear Hiring Manager,\n\nI am an AI & Data Science graduate with hands-on experience building and deploying scalable machine learning solutions. My expertise covers predictive models, backend data systems (FastAPI, SQL), and reproducible MLOps pipelines (Docker, MLflow).\n\nI've successfully deployed models for energy forecasting and credit risk, demonstrating proficiency in optimizing performance and ensuring production readiness. My project experience also includes automating SQL query generation.\n\nI am eager to discuss how my AI/ML development and data engineering skills can benefit the company.\n\nBest regards,\nAbhishek Bhosale\nPortfolio: https://abhishek-bhosale.vercel.app/ | GitHub: https://github.com/just000Curious | LinkedIn: https://www.linkedin.com/in/abhishek-sambhaji-bhosale/",
+        "body": "Dear Hiring Manager,\n\nPardon the unsolicited email, but I'm reaching out on a bit of a whim to see if any exciting, perhaps even \"accidental,\" new AI/ML openings have mysteriously popped up at [Company Name] recently.\n\nMy name is Abhishek Bhosale, and I'm an AI & Data Science graduate passionate about transforming complex data challenges into scalable, production-ready machine learning solutions. I specialize in building robust MLOps pipelines with Docker and MLflow, crafting efficient backend APIs using FastAPI, and optimizing predictive models.\n\nFor instance, I recently developed and deployed \"PASE,\" a system that forecasts wind power generation and community demand with high accuracy, minimizing grid waste. This involved engineering a full-stack solution from XGBoost/Random Forest models to a containerized FastAPI backend and a live React dashboard deployed on Vercel. I'm also familiar with the latest in Generative AI, including RAG and LangChain.\n\nIf [Company Name] ever finds itself in need of someone who can not only build sophisticated AI models but also ensure they deliver real-world impact, I'd be thrilled to connect. My portfolio and GitHub are linked below.\n\nBest regards,\nAbhishek Bhosale\nPortfolio: https://abhishek-bhosale.vercel.app/\nGitHub: https://github.com/just000Curious\nLinkedIn: https://www.linkedin.com/in/abhishek-sambhaji-bhosale/\n\nBest regards,\nAbhishek Bhosale\nPortfolio: https://abhishek-bhosale.vercel.app/ | GitHub: https://github.com/just000Curious | LinkedIn: https://www.linkedin.com/in/abhishek-sambhaji-bhosale/",
         "status": "Sent",
         "follow_up_days": 3,
         "follow_up_count": 0,
         "created_at": "2026-08-03T23:35:20.569575",
-        "sent_at": "2026-08-03T18:05:45.977Z",
+        "sent_at": "2026-08-03T18:08:02.786Z",
         "follow_up_sent_at": null
     }
 ]

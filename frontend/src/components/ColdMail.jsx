@@ -5,6 +5,7 @@ export default function ColdMail({ profile, resumeText, onDraftCreated, toast, s
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
   const [companyInfo, setCompanyInfo] = useState("");
+  const [tone, setTone] = useState("Professional and direct");
   const [error, setError] = useState("");
 
   async function handleGenerate() {
@@ -23,6 +24,7 @@ export default function ColdMail({ profile, resumeText, onDraftCreated, toast, s
         github_url: profile.github,
         portfolio_url: profile.portfolio,
         linkedin_url: profile.linkedin,
+        tone: tone,
       });
 
       await addApplication({
@@ -71,6 +73,17 @@ export default function ColdMail({ profile, resumeText, onDraftCreated, toast, s
             onChange={(e) => setRole(e.target.value)}
           />
         </div>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">Tone / Style</label>
+        <select className="form-input" value={tone} onChange={(e) => setTone(e.target.value)}>
+          <option value="Professional and direct">Professional and direct</option>
+          <option value="Enthusiastic and passionate">Enthusiastic and passionate</option>
+          <option value="Casual and conversational">Casual and conversational</option>
+          <option value="Bold and confident">Bold and confident</option>
+          <option value="Short and to the point">Short and to the point</option>
+        </select>
       </div>
 
       <div className="form-group">

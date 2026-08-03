@@ -5,6 +5,7 @@ export default function FromJD({ profile, resumeText, onDraftCreated, toast, set
   const [jdText, setJdText] = useState("");
   const [overrideEmail, setOverrideEmail] = useState("");
   const [overrideTitle, setOverrideTitle] = useState("");
+  const [tone, setTone] = useState("Professional and direct");
   const [showOverride, setShowOverride] = useState(false);
   const [error, setError] = useState("");
   const [extracted, setExtracted] = useState(null);
@@ -27,6 +28,7 @@ export default function FromJD({ profile, resumeText, onDraftCreated, toast, set
         linkedin_url: profile.linkedin,
         override_email: overrideEmail,
         override_title: overrideTitle,
+        tone: tone,
       });
 
       setExtracted({
@@ -105,6 +107,17 @@ export default function FromJD({ profile, resumeText, onDraftCreated, toast, set
             </div>
           </div>
         )}
+      </div>
+
+      <div className="form-group" style={{ marginBottom: 16 }}>
+        <label className="form-label">Tone / Style</label>
+        <select className="form-input" value={tone} onChange={(e) => setTone(e.target.value)}>
+          <option value="Professional and direct">Professional and direct</option>
+          <option value="Enthusiastic and passionate">Enthusiastic and passionate</option>
+          <option value="Casual and conversational">Casual and conversational</option>
+          <option value="Bold and confident">Bold and confident</option>
+          <option value="Short and to the point">Short and to the point</option>
+        </select>
       </div>
 
       {extracted && (

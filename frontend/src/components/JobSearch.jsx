@@ -27,6 +27,7 @@ export default function JobSearch({ activeProfile, resumeText, onDraftCreated, t
     if (!resumeText) return toast("Please upload your resume first.", "error");
     if (!activeProfile.name) return toast("Please provide your name in the active profile.", "error");
 
+    setGlobalLoading(true);
     setDraftingId(idx);
     try {
       const jdText = `Job Title: ${job.title}\nCompany: ${job.company}\nDescription: ${job.description}\nSkills: ${(job.skills_required || []).join(", ")}`;
@@ -54,6 +55,7 @@ export default function JobSearch({ activeProfile, resumeText, onDraftCreated, t
       toast("Draft generation failed: " + err.message, "error");
     } finally {
       setDraftingId(null);
+      setGlobalLoading(false);
     }
   }
 

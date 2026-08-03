@@ -68,6 +68,7 @@ class ColdMailRequest(BaseModel):
     github_url: str = ""
     portfolio_url: str = ""
     linkedin_url: str = ""
+    tone: str = "Professional and direct"
 
 class JDRequest(BaseModel):
     resume_text: str
@@ -78,6 +79,7 @@ class JDRequest(BaseModel):
     linkedin_url: str = ""
     override_email: str = ""
     override_title: str = ""
+    tone: str = "Professional and direct"
 
 class PosterRequest(BaseModel):
     resume_text: str
@@ -87,6 +89,7 @@ class PosterRequest(BaseModel):
     linkedin_url: str = ""
     override_email: str = ""
     override_title: str = ""
+    tone: str = "Professional and direct"
 
 class FollowUpRequest(BaseModel):
     original_body: str
@@ -266,6 +269,7 @@ def gen_cold(req: ColdMailRequest):
             github_url=req.github_url,
             portfolio_url=req.portfolio_url,
             linkedin_url=req.linkedin_url,
+            tone=req.tone,
         )
         return {
             "hiring_manager_name": draft.hiring_manager_name,
@@ -295,6 +299,7 @@ def gen_jd(req: JDRequest):
             github_url=req.github_url,
             portfolio_url=req.portfolio_url,
             linkedin_url=req.linkedin_url,
+            tone=req.tone,
         )
         return {
             "extracted_email": extracted_email,
@@ -318,6 +323,7 @@ async def gen_poster(
     linkedin_url: str = Form(""),
     override_email: str = Form(""),
     override_title: str = Form(""),
+    tone: str = Form("Professional and direct"),
 ):
     try:
         img_bytes = await file.read()
@@ -339,6 +345,7 @@ async def gen_poster(
             github_url=github_url,
             portfolio_url=portfolio_url,
             linkedin_url=linkedin_url,
+            tone=tone,
         )
         return {
             "extracted_email": extracted_email,

@@ -2,11 +2,19 @@
     "profiles": [
         {
             "id": "hnv90cc2",
-            "role": "New Role",
+            "role": "data scientists ",
             "name": "Abhishek Bhosale ",
             "github": "https://github.com/just000Curious",
             "portfolio": "https://abhishek-bhosale.vercel.app/",
             "linkedin": "https://www.linkedin.com/in/abhishek-sambhaji-bhosale/"
+        },
+        {
+            "id": "sejqiwf8",
+            "role": "",
+            "name": "",
+            "github": "",
+            "portfolio": "",
+            "linkedin": ""
         }
     ],
     "active_id": "hnv90cc2"

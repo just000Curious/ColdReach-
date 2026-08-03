@@ -181,7 +181,7 @@ Return ONLY a JSON object with those 4 keys. If any field cannot be found, use a
 
 def generate_cold_email(
     resume_text: str, company_info: str, target_role: str,
-    sender_name: str, github_url: str, portfolio_url: str, linkedin_url: str = "",
+    sender_name: str, github_url: str, portfolio_url: str, linkedin_url: str = "", tone: str = "Professional and direct",
 ) -> EmailDraftResponse:
     """Generate a cold outreach email (no JD, just reaching out)."""
     sender_name = sender_name.strip() if sender_name else "[Your Name]"
@@ -199,11 +199,12 @@ RULES:
 3. The sender's name is: {sender_name}
 4. Target Role: {target_role if target_role else "General inquiry"}
 5. Company context: {company_info if company_info else "No specific company info provided"}
+6. Tone/Style: {tone}
 
 EMAIL FORMAT:
 Start with "Dear [HR Name / Hiring Manager],"
 Write the body paragraphs. 
-End the body text abruptly. DO NOT include a sign-off like "Best regards" or the sender's name.
+CRITICAL: DO NOT include ANY sign-off, signature, "Best regards", or your name at the end. The system will append it automatically. End the email body with the final sentence's punctuation.
 
 Return ONLY a JSON object:
 - "hiring_manager_name": "Hiring Manager"
@@ -229,7 +230,7 @@ RESUME:
 
 def generate_jd_email(
     resume_text: str, jd_text: str, job_title: str, company_name: str,
-    sender_name: str, github_url: str, portfolio_url: str, linkedin_url: str = "",
+    sender_name: str, github_url: str, portfolio_url: str, linkedin_url: str = "", tone: str = "Professional and direct",
 ) -> EmailDraftResponse:
     """Generate an application email based on a specific job description."""
     sender_name = sender_name.strip() if sender_name else "[Your Name]"
@@ -247,11 +248,12 @@ RULES:
 3. Sender name: {sender_name}
 4. Job Title: {job_title}
 5. Company: {company_name}
+6. Tone/Style: {tone}
 
 EMAIL FORMAT:
 Start with "Dear [HR Name / Hiring Manager],"
 Write the body paragraphs highlighting 2-3 specific skills matching the JD.
-End the body text abruptly. DO NOT include a sign-off like "Best regards" or the sender's name.
+CRITICAL: DO NOT include ANY sign-off, signature, "Best regards", or your name at the end. The system will append it automatically. End the email body with the final sentence's punctuation.
 
 Return ONLY a JSON object:
 - "hiring_manager_name": HR name if known, else "Hiring Manager"
@@ -298,11 +300,12 @@ def rewrite_email(original_body: str, app_type: str, company: str, resume_text: 
 Do NOT just swap synonyms. Construct a completely fresh cold outreach email.
 Keep it professional, highly personalized, and concise.
 DO NOT use HTML tags like <br>. Use literal newline characters for spacing.
+CRITICAL: DO NOT include ANY sign-off, signature, "Best regards", or your name at the end. The system will append it automatically. End the email body with the final sentence's punctuation.
 
 Resume Context:
 {resume_text[:2000]}
 
-Original Email:
+Original Email (MAY contain a signature, ignore it):
 {original_body}
 
 Return ONLY the rewritten email body text. No subject line. No explanations."""
@@ -312,22 +315,18 @@ Return ONLY the rewritten email body text. No subject line. No explanations."""
 Acknowledge briefly that you applied earlier and are following up, but pivot the focus to this new angle.
 Keep it punchy, professional, and short.
 DO NOT use HTML tags like <br>. Use literal newline characters for spacing.
+CRITICAL: DO NOT include ANY sign-off, signature, "Best regards", or your name at the end. The system will append it automatically. End the email body with the final sentence's punctuation.
 
 Resume Context:
 {resume_text[:2000]}
 
-Original Email:
+Original Email (MAY contain a signature, ignore it):
 {original_body}
 
 Return ONLY the rewritten email body text. No subject line. No explanations."""
 
     result_body = call_gemini(prompt, json_mode=False, temperature=0.7).strip()
-    
-    signature = f"\n\nBest regards,\n{sender_name}" if sender_name else ""
-    if links_str:
-        signature += f"\n{links_str}"
-        
-    return result_body + signature
+    return result_body
 
 
 def generate_follow_up(original_body: str, company: str, hr_name: str, sender_name: str = "", github_url: str = "", portfolio_url: str = "", linkedin_url: str = "") -> str:
@@ -343,7 +342,8 @@ Context: I previously emailed {hr_name} at {company} about a job opportunity.
 My original email: {original_body[:500]}
 
 Return ONLY the follow-up text. No placeholders, no subject line. Sound human and genuine.
-DO NOT use HTML tags like <br>. Use literal newline characters for spacing."""
+DO NOT use HTML tags like <br>. Use literal newline characters for spacing.
+CRITICAL: DO NOT include ANY sign-off, signature, "Best regards", or your name at the end. The system will append it automatically. End the email body with the final sentence's punctuation."""
     result_body = call_gemini(prompt, json_mode=False, temperature=0.4).strip()
     
     signature = f"\n\nBest regards,\n{sender_name}" if sender_name else ""

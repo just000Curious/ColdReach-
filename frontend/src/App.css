@@ -190,7 +190,7 @@ body {
   transition: background var(--transition);
   display: inline-flex; align-items: center; gap: 6px;
 }
-.sidebar .btn-ghost:hover { background: var(--sidebar-hover); color: white; }
+.sidebar .btn-ghost:hover { background: var(--sidebar-hover); color: var(--sidebar-heading); }
 
 .sidebar .btn-secondary {
   background: var(--sidebar-input-bg);
@@ -595,6 +595,22 @@ body {
 }
 .modal-header h2 { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
 
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  max-width: 500px; width: 90%;
+  padding: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  display: flex; flex-direction: column;
+}
+.modal h3 { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; }
+.modal p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 20px; }
+
+.modal-actions {
+  display: flex; justify-content: flex-end; gap: 12px; margin-top: auto;
+}
+
 .profile-list {
   padding: 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 16px;
 }
@@ -645,27 +661,20 @@ body {
   .row { flex-direction: column; }
 }
 
-.metrics {
-  display: flex;
-  gap: 16px;
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 20px; text-align: center; color: var(--text-muted);
 }
-.metric {
-  flex: 1;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  padding: 16px;
-  border-radius: var(--radius);
-  text-align: center;
+.empty-icon {
+  width: 64px; height: 64px; border-radius: 50%; background: var(--surface); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center; margin-bottom: 16px; color: var(--text-faint);
 }
-.metric-label {
-  font-size: 0.84rem;
-  color: var(--text-muted);
-  margin-bottom: 4px;
+.extracted-bar {
+  background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  padding: 12px 16px; border-radius: 6px; font-size: 0.82rem; margin-bottom: 16px; color: var(--text-primary);
 }
-.metric-value {
-  font-size: 1.05rem;
-  font-weight: 600;
-}
+.extracted-bar code { background: var(--page-bg); padding: 2px 6px; border-radius: 4px; color: var(--accent); font-weight: 500; }
+
 .global-loader-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
