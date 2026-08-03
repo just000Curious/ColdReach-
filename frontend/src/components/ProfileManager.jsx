@@ -23,7 +23,7 @@ export default function ProfileManager({ profilesData, setProfilesData, onClose,
   }
 
   function deleteProfile(id) {
-    if (profiles.length <= 1) return alert("Must have at least one profile.");
+    if (profiles.length <= 1) return toast("Must have at least one profile.", "warning");
     const newProfiles = profiles.filter(p => p.id !== id);
     setProfiles(newProfiles);
     if (activeId === id) setActiveId(newProfiles[0].id);
