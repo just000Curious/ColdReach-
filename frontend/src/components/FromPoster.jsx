@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { generatePoster, addApplication } from "../api";
 
 export default function FromPoster({ profile, resumeText, onDraftCreated, toast, setGlobalLoading }) {
@@ -10,6 +10,26 @@ export default function FromPoster({ profile, resumeText, onDraftCreated, toast,
   const [showOverride, setShowOverride] = useState(false);
   const [error, setError] = useState("");
   const [extracted, setExtracted] = useState(null);
+
+  useEffect(() => {
+    const handlePaste = (e) => {
+      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      for (let index in items) {
+        const item = items[index];
+        if (item.kind === 'file') {
+          const blob = item.getAsFile();
+          if (blob && blob.type.startsWith('image/')) {
+            setFile(blob);
+            setPreview(URL.createObjectURL(blob));
+            setExtracted(null);
+            setError("");
+          }
+        }
+      }
+    };
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, []);
 
   function handleFile(e) {
     const f = e.target.files[0];
@@ -80,8 +100,8 @@ export default function FromPoster({ profile, resumeText, onDraftCreated, toast,
       </p>
 
       <div className="form-group">
-        <label className="btn btn-secondary" style={{ cursor: "pointer" }}>
-          {file ? `File: ${file.name}` : "Upload Poster / Flyer"}
+        <label className="btn btn-secondary" style={{ cursor: "pointer", display: "inline-block", width: "100%", textAlign: "center", padding: "20px", border: "2px dashed var(--border)" }}>
+          {file ? `File: ${file.name || 'Pasted Image'}` : "Upload Poster / Flyer or Paste Image (Ctrl+V)"}
           <input type="file" accept="image/png,image/jpeg,image/jpg" onChange={handleFile} hidden />
         </label>
       </div>
