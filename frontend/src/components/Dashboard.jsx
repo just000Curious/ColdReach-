@@ -270,145 +270,6 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
         ))}
       </div>
 
-      {/* Detail Cards */}
-      <h3 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: 12 }}>Application Details</h3>
-      <div className="app-cards">
-        {[...filteredApps].reverse().map((app) => {
-          const isOpen = expandedId === app.id;
-          const e = getEdit(app);
-          const isLoading = loading[app.id];
-          const sent_days = daysSince(app.sent_at);
-          const fu_days = daysSince(app.follow_up_sent_at);
-
-          return (
-            <div className="app-card" key={app.id}>
-              <div className="app-card-header" onClick={() => setExpandedId(isOpen ? null : app.id)}>
-                <div className="app-card-header-left">
-                  <span className="app-card-emoji">{STATUS_EMOJI[app.status]}</span>
-                  <div className="app-card-info">
-                    <div className="role">{app.role} at {app.company}</div>
-                    <div className="company">{app.email} · {(app.created_at || "").slice(0, 10)}</div>
-                  </div>
-                </div>
-                <span className={`status-badge ${BADGE_CLASS[app.status]}`}>{app.status}</span>
-                <span className={`app-card-chevron ${isOpen ? "open" : ""}`}>▸</span>
-              </div>
-
-              {isOpen && (
-                <div className="app-card-body">
-                  <div className="app-card-editor">
-                    <div className="form-group">
-                      <label className="form-label">To</label>
-                      <input className="form-input" value={e.email || app.email}
-                        onChange={(ev) => setEdit(app.id, "email", ev.target.value)} />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Subject</label>
-                      <input className="form-input" value={e.subject || app.subject}
-                        onChange={(ev) => setEdit(app.id, "subject", ev.target.value)} />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Body</label>
-                      <textarea className="form-textarea" style={{ minHeight: 160 }}
-                        value={e.body || app.body}
-                        onChange={(ev) => setEdit(app.id, "body", ev.target.value)} />
-                    </div>
-                    <div className="btn-group">
-                      <button className="btn btn-secondary btn-sm" onClick={() => handleSaveEdits(app)}
-                        disabled={isLoading}>Save Edits</button>
-                      <button className="btn btn-ghost btn-sm" onClick={(ev) => { ev.stopPropagation(); copyToClipboard(e.body || app.body); }}>
-                        Copy Body
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="app-card-actions">
-                    <div className="meta">
-                      <div><strong>Type:</strong> {app.type}</div>
-                      <div><strong>Status:</strong> {app.status}</div>
-                      {app.sent_at && <div><strong>Sent:</strong> {app.sent_at.slice(0, 10)}</div>}
-                      {app.follow_up_count > 0 && <div><strong>Follow-ups:</strong> {app.follow_up_count}</div>}
-                    </div>
-
-                    {/* ── DRAFT ── */}
-                    {app.status === "Draft" && (
-                      <button className="btn btn-primary" onClick={() => triggerSendConfirm(app, "send")}>
-                        Send Now
-                      </button>
-                    )}
-
-                    {/* ── SENT ── */}
-                    {app.status === "Sent" && (
-                      <div className="btn-group" style={{ flexDirection: "column" }}>
-                        <div className="btn-group">
-                          <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Replied")}>Replied</button>
-                          <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Interview Scheduled")}>Interview</button>
-                          <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Rejected")}>Rejected</button>
-                        </div>
-                        {app.type === "Cold Email" && (
-                          <button className="btn btn-secondary btn-sm" onClick={() => triggerSendConfirm(app, "resend")}>
-                            Resend with new angle ({sent_days}d ago)
-                          </button>
-                        )}
-                        {sent_days >= (app.follow_up_days || 3) && (
-                          <button className="btn btn-primary btn-sm" onClick={() => triggerSendConfirm(app, "follow-up")}>
-                            Send Follow-up ({sent_days}d ago)
-                          </button>
-                        )}
-                      </div>
-                    )}
-
-                    {/* ── FOLLOW-UP SENT ── */}
-                    {app.status === "Follow-up Sent" && (
-                      <div className="btn-group" style={{ flexDirection: "column" }}>
-                        <div className="btn-group">
-                          <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Replied")}>Replied</button>
-                          <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Interview Scheduled")}>Interview</button>
-                          <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Ghosted")}>Ghosted</button>
-                        </div>
-                        {(app.follow_up_count || 0) < 3 && fu_days >= (CADENCE[app.follow_up_count] || 14) && (
-                          <button className="btn btn-primary btn-sm" onClick={() => triggerSendConfirm(app, "follow-up")}>
-                            Follow-up #{(app.follow_up_count || 0) + 1} ({fu_days}d ago)
-                          </button>
-                        )}
-                        {(app.follow_up_count || 0) >= 3 && (
-                          <p style={{ color: "var(--red)", fontSize: "0.82rem" }}>3 follow-ups sent. Consider marking as Ghosted.</p>
-                        )}
-                      </div>
-                    )}
-
-                    {/* ── REPLIED ── */}
-                    {app.status === "Replied" && (
-                      <div className="btn-group">
-                        <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Interview Scheduled")}>Interview</button>
-                        <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Rejected")}>Rejected</button>
-                      </div>
-                    )}
-
-                    {/* ── INTERVIEW ── */}
-                    {app.status === "Interview Scheduled" && (
-                      <div>
-                        <p style={{ color: "var(--green)", fontSize: "0.84rem", marginBottom: 8 }}>Interview locked in!</p>
-                        <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Rejected")}>Rejected</button>
-                      </div>
-                    )}
-
-                    {app.status === "Ghosted" && <p style={{ color: "var(--text-faint)", fontSize: "0.82rem" }}>No response. Move on.</p>}
-                    {app.status === "Rejected" && <p style={{ color: "var(--text-faint)", fontSize: "0.82rem" }}>On to the next one.</p>}
-
-                    <div style={{ borderTop: "1px solid var(--border)", paddingTop: 10, marginTop: 8 }}>
-                      <button className="btn btn-danger btn-sm" onClick={() => setDeleteConfirm(app)}>
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
       {/* Bulk Cleanup */}
       <div style={{ display: "flex", gap: 8, marginTop: 20 }}>
         {counts.Draft > 0 && (
@@ -427,6 +288,136 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
           </button>
         )}
       </div>
+
+      {/* Application Detail Modal */}
+      {expandedId && (() => {
+        const app = apps.find((a) => a.id === expandedId);
+        if (!app) return null;
+        const e = getEdit(app);
+        const isLoading = loading[app.id];
+        const sent_days = daysSince(app.sent_at);
+        const fu_days = daysSince(app.follow_up_sent_at);
+
+        return (
+          <div className="modal-overlay" onClick={() => setExpandedId(null)}>
+            <div className="modal" onClick={(ev) => ev.stopPropagation()} style={{ maxWidth: 720, width: "95%" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <div>
+                  <h3 style={{ margin: 0 }}>{app.role} at {app.company}</h3>
+                  <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginTop: 4 }}>
+                    {app.email} · {(app.created_at || "").slice(0, 10)}
+                  </div>
+                </div>
+                <span className={`status-badge ${BADGE_CLASS[app.status]}`}>{app.status}</span>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 20 }}>
+                <div>
+                  <div className="form-group">
+                    <label className="form-label">To</label>
+                    <input className="form-input" value={e.email || app.email}
+                      onChange={(ev) => setEdit(app.id, "email", ev.target.value)} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Subject</label>
+                    <input className="form-input" value={e.subject || app.subject}
+                      onChange={(ev) => setEdit(app.id, "subject", ev.target.value)} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Body</label>
+                    <textarea className="form-textarea" style={{ minHeight: 160 }}
+                      value={e.body || app.body}
+                      onChange={(ev) => setEdit(app.id, "body", ev.target.value)} />
+                  </div>
+                  <div className="btn-group">
+                    <button className="btn btn-secondary btn-sm" onClick={() => handleSaveEdits(app)}
+                      disabled={isLoading}>Save Edits</button>
+                    <button className="btn btn-ghost btn-sm" onClick={(ev) => { ev.stopPropagation(); copyToClipboard(e.body || app.body); }}>
+                      Copy Body
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", lineHeight: 1.7 }}>
+                    <div><strong>Type:</strong> {app.type}</div>
+                    <div><strong>Status:</strong> {app.status}</div>
+                    {app.sent_at && <div><strong>Sent:</strong> {app.sent_at.slice(0, 10)}</div>}
+                    {app.follow_up_count > 0 && <div><strong>Follow-ups:</strong> {app.follow_up_count}</div>}
+                  </div>
+
+                  {app.status === "Draft" && (
+                    <button className="btn btn-primary" onClick={() => triggerSendConfirm(app, "send")}>
+                      Send Now
+                    </button>
+                  )}
+
+                  {app.status === "Sent" && (
+                    <div className="btn-group" style={{ flexDirection: "column" }}>
+                      <div className="btn-group">
+                        <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Replied")}>Replied</button>
+                        <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Interview Scheduled")}>Interview</button>
+                        <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Rejected")}>Rejected</button>
+                      </div>
+                      {app.type === "Cold Email" && (
+                        <button className="btn btn-secondary btn-sm" onClick={() => triggerSendConfirm(app, "resend")}>
+                          Resend with new angle ({sent_days}d ago)
+                        </button>
+                      )}
+                      {sent_days >= (app.follow_up_days || 3) && (
+                        <button className="btn btn-primary btn-sm" onClick={() => triggerSendConfirm(app, "follow-up")}>
+                          Send Follow-up ({sent_days}d ago)
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {app.status === "Follow-up Sent" && (
+                    <div className="btn-group" style={{ flexDirection: "column" }}>
+                      <div className="btn-group">
+                        <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Replied")}>Replied</button>
+                        <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Interview Scheduled")}>Interview</button>
+                        <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Ghosted")}>Ghosted</button>
+                      </div>
+                      {(app.follow_up_count || 0) < 3 && fu_days >= (CADENCE[app.follow_up_count] || 14) && (
+                        <button className="btn btn-primary btn-sm" onClick={() => triggerSendConfirm(app, "follow-up")}>
+                          Follow-up #{(app.follow_up_count || 0) + 1} ({fu_days}d ago)
+                        </button>
+                      )}
+                      {(app.follow_up_count || 0) >= 3 && (
+                        <p style={{ color: "var(--red)", fontSize: "0.82rem" }}>3 follow-ups sent. Consider marking as Ghosted.</p>
+                      )}
+                    </div>
+                  )}
+
+                  {app.status === "Replied" && (
+                    <div className="btn-group">
+                      <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Interview Scheduled")}>Interview</button>
+                      <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Rejected")}>Rejected</button>
+                    </div>
+                  )}
+
+                  {app.status === "Interview Scheduled" && (
+                    <div>
+                      <p style={{ color: "var(--green)", fontSize: "0.84rem", marginBottom: 8 }}>Interview locked in!</p>
+                      <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Rejected")}>Rejected</button>
+                    </div>
+                  )}
+
+                  {app.status === "Ghosted" && <p style={{ color: "var(--text-faint)", fontSize: "0.82rem" }}>No response. Move on.</p>}
+                  {app.status === "Rejected" && <p style={{ color: "var(--text-faint)", fontSize: "0.82rem" }}>On to the next one.</p>}
+
+                  <div style={{ borderTop: "1px solid var(--border)", paddingTop: 10, marginTop: 8 }}>
+                    <button className="btn btn-danger btn-sm" onClick={() => setDeleteConfirm(app)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Delete Modal */}
       {deleteConfirm && (
