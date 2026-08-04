@@ -27,6 +27,9 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
   const [loading, setLoading] = useState({});
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [sendConfirm, setSendConfirm] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("All");
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(null);
 
   function triggerSendConfirm(app, type) {
     const e = getEdit(app);
@@ -53,6 +56,22 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
   STATUS_ORDER.forEach((s) => (counts[s] = 0));
   apps.forEach((a) => (counts[a.status] = (counts[a.status] || 0) + 1));
   const activeStatuses = STATUS_ORDER.filter((s) => counts[s] > 0);
+
+  const filteredApps = apps.filter((a) => {
+    const matchesSearch = !searchTerm ||
+      a.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      a.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      a.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterStatus === "All" || a.status === filterStatus;
+    return matchesSearch && matchesFilter;
+  });
+
+  const sentTotal = counts.Sent + counts["Follow-up Sent"] + counts.Replied + counts["Interview Scheduled"] + counts.Rejected + counts.Ghosted;
+  const responseRate = sentTotal > 0 ? Math.round(((counts.Replied + counts["Interview Scheduled"]) / sentTotal) * 100) : 0;
+
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => toast("Copied to clipboard!", "success"));
+  }
 
   function getEdit(app) {
     return editState[app.id] || { email: app.email, subject: app.subject, body: app.body };
@@ -198,6 +217,29 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
         <div className="metric"><div className="metric-label">Follow-ups</div><div className="metric-value">{counts["Follow-up Sent"]}</div></div>
         <div className="metric"><div className="metric-label">Interviews</div><div className="metric-value">{counts["Interview Scheduled"]}</div></div>
         <div className="metric"><div className="metric-label">Replied</div><div className="metric-value">{counts.Replied}</div></div>
+        <div className="metric"><div className="metric-label">Response Rate</div><div className="metric-value" style={{ color: responseRate > 30 ? "var(--green)" : "var(--amber)" }}>{responseRate}%</div></div>
+      </div>
+
+      {/* Search & Filter */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 20, alignItems: "center" }}>
+        <input
+          className="form-input"
+          placeholder="Search by role, company, or email..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ flex: 2 }}
+        />
+        <select
+          className="form-input"
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          style={{ flex: 1, maxWidth: 200 }}
+        >
+          <option value="All">All Statuses</option>
+          {STATUS_ORDER.map((s) => (
+            <option key={s} value={s}>{s} ({counts[s]})</option>
+          ))}
+        </select>
       </div>
 
       {/* Kanban Board */}
@@ -207,20 +249,23 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
             <div className={`kanban-col-header ${KH_CLASS[status]}`}>
               {STATUS_EMOJI[status]} {status} ({counts[status]})
             </div>
-            {[...apps].reverse().filter((a) => a.status === status).map((app) => (
-              <div
-                className="kanban-card"
-                key={app.id}
-                onClick={() => setExpandedId(expandedId === app.id ? null : app.id)}
-              >
-                <div className="kc-role">{app.role}</div>
-                <div className="kc-company">{app.company}</div>
-                <div className="kc-meta">
-                  <span>{(app.sent_at || app.created_at || "").slice(0, 10)}</span>
-                  <span>{app.email.length > 20 ? app.email.slice(0, 20) + "…" : app.email}</span>
+            {[...filteredApps].reverse().filter((a) => a.status === status).map((app) => {
+              const daysAgo = daysSince(app.sent_at || app.created_at);
+              return (
+                <div
+                  className="kanban-card"
+                  key={app.id}
+                  onClick={() => setExpandedId(expandedId === app.id ? null : app.id)}
+                >
+                  <div className="kc-role">{app.role}</div>
+                  <div className="kc-company">{app.company}</div>
+                  <div className="kc-meta">
+                    <span>{daysAgo === 0 ? "Today" : `${daysAgo}d ago`}</span>
+                    <span>{app.email.length > 20 ? app.email.slice(0, 20) + "…" : app.email}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ))}
       </div>
@@ -228,7 +273,7 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
       {/* Detail Cards */}
       <h3 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: 12 }}>Application Details</h3>
       <div className="app-cards">
-        {[...apps].reverse().map((app) => {
+        {[...filteredApps].reverse().map((app) => {
           const isOpen = expandedId === app.id;
           const e = getEdit(app);
           const isLoading = loading[app.id];
@@ -268,8 +313,13 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
                         value={e.body || app.body}
                         onChange={(ev) => setEdit(app.id, "body", ev.target.value)} />
                     </div>
-                    <button className="btn btn-secondary btn-sm" onClick={() => handleSaveEdits(app)}
-                      disabled={isLoading}>Save Edits</button>
+                    <div className="btn-group">
+                      <button className="btn btn-secondary btn-sm" onClick={() => handleSaveEdits(app)}
+                        disabled={isLoading}>Save Edits</button>
+                      <button className="btn btn-ghost btn-sm" onClick={(ev) => { ev.stopPropagation(); copyToClipboard(e.body || app.body); }}>
+                        Copy Body
+                      </button>
+                    </div>
                   </div>
 
                   <div className="app-card-actions">
@@ -362,17 +412,17 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
       {/* Bulk Cleanup */}
       <div style={{ display: "flex", gap: 8, marginTop: 20 }}>
         {counts.Draft > 0 && (
-          <button className="btn btn-ghost btn-sm" onClick={() => { bulkDelete("Draft").then(onRefresh); }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => setBulkDeleteConfirm("Draft")}>
             Clear Drafts ({counts.Draft})
           </button>
         )}
         {counts.Replied > 0 && (
-          <button className="btn btn-ghost btn-sm" onClick={() => { bulkDelete("Replied").then(onRefresh); }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => setBulkDeleteConfirm("Replied")}>
             Clear Replied ({counts.Replied})
           </button>
         )}
         {counts.Ghosted > 0 && (
-          <button className="btn btn-ghost btn-sm" onClick={() => { bulkDelete("Ghosted").then(onRefresh); }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => setBulkDeleteConfirm("Ghosted")}>
             Clear Ghosted ({counts.Ghosted})
           </button>
         )}
@@ -425,6 +475,24 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
                 setSendConfirm(null);
               }}>
                 Confirm {sendConfirm.type === "resend" ? "& Generate" : "Send"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Bulk Delete Modal */}
+      {bulkDeleteConfirm && (
+        <div className="modal-overlay" onClick={() => setBulkDeleteConfirm(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Confirm Bulk Delete</h3>
+            <p>
+              Are you sure you want to delete all <strong>{counts[bulkDeleteConfirm]}</strong> applications
+              with status <strong>{bulkDeleteConfirm}</strong>? This cannot be undone.
+            </p>
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={() => setBulkDeleteConfirm(null)}>Cancel</button>
+              <button className="btn btn-danger" onClick={() => { bulkDelete(bulkDeleteConfirm).then(onRefresh); setBulkDeleteConfirm(null); }}>
+                Delete All
               </button>
             </div>
           </div>
