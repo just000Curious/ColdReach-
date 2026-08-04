@@ -206,66 +206,102 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
   }
 
   return (
-    <div>
-      <h2 style={{ fontSize: "1.15rem", fontWeight: 600, marginBottom: 20 }}>Application Tracker</h2>
+    <div style={{ padding: "10px 20px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 30 }}>
+        <div>
+          <h2 style={{ fontSize: "1.4rem", fontWeight: 700, margin: 0, color: "var(--text-primary)" }}>Application Tracker</h2>
+          <p style={{ margin: "4px 0 0 0", color: "var(--text-muted)", fontSize: "0.9rem" }}>Manage and track your cold outreach pipeline</p>
+        </div>
+      </div>
 
       {/* Metrics */}
-      <div className="metrics">
-        <div className="metric"><div className="metric-label">Total</div><div className="metric-value">{apps.length}</div></div>
-        <div className="metric"><div className="metric-label">Drafts</div><div className="metric-value">{counts.Draft}</div></div>
-        <div className="metric"><div className="metric-label">Sent</div><div className="metric-value">{counts.Sent}</div></div>
-        <div className="metric"><div className="metric-label">Follow-ups</div><div className="metric-value">{counts["Follow-up Sent"]}</div></div>
-        <div className="metric"><div className="metric-label">Interviews</div><div className="metric-value">{counts["Interview Scheduled"]}</div></div>
-        <div className="metric"><div className="metric-label">Replied</div><div className="metric-value">{counts.Replied}</div></div>
-        <div className="metric"><div className="metric-label">Response Rate</div><div className="metric-value" style={{ color: responseRate > 30 ? "var(--green)" : "var(--amber)" }}>{responseRate}%</div></div>
+      <div className="metrics" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 20, marginBottom: 32 }}>
+        <div className="metric" style={{ padding: "16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+          <div className="metric-label" style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Applications</div>
+          <div className="metric-value" style={{ fontSize: "1.8rem", fontWeight: 700 }}>{apps.length}</div>
+        </div>
+        <div className="metric" style={{ padding: "16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+          <div className="metric-label" style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Drafts</div>
+          <div className="metric-value" style={{ fontSize: "1.8rem", fontWeight: 700 }}>{counts.Draft}</div>
+        </div>
+        <div className="metric" style={{ padding: "16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+          <div className="metric-label" style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Sent</div>
+          <div className="metric-value" style={{ fontSize: "1.8rem", fontWeight: 700 }}>{counts.Sent}</div>
+        </div>
+        <div className="metric" style={{ padding: "16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+          <div className="metric-label" style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Follow-ups</div>
+          <div className="metric-value" style={{ fontSize: "1.8rem", fontWeight: 700 }}>{counts["Follow-up Sent"]}</div>
+        </div>
+        <div className="metric" style={{ padding: "16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+          <div className="metric-label" style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Interviews</div>
+          <div className="metric-value" style={{ fontSize: "1.8rem", fontWeight: 700, color: "var(--green)" }}>{counts["Interview Scheduled"]}</div>
+        </div>
+        <div className="metric" style={{ padding: "16px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+          <div className="metric-label" style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>Response Rate</div>
+          <div className="metric-value" style={{ fontSize: "1.8rem", fontWeight: 700, color: responseRate > 30 ? "var(--green)" : "var(--amber)" }}>{responseRate}%</div>
+        </div>
       </div>
 
       {/* Search & Filter */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 20, alignItems: "center" }}>
-        <input
-          className="form-input"
-          placeholder="Search by role, company, or email..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ flex: 2 }}
-        />
-        <select
-          className="form-input"
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          style={{ flex: 1, maxWidth: 200 }}
-        >
-          <option value="All">All Statuses</option>
-          {STATUS_ORDER.map((s) => (
-            <option key={s} value={s}>{s} ({counts[s]})</option>
-          ))}
-        </select>
+      <div style={{ display: "flex", gap: 16, marginBottom: 32, alignItems: "center", background: "var(--surface)", padding: "16px 20px", borderRadius: "var(--radius)", border: "1px solid var(--border)" }}>
+        <div style={{ flex: 2, position: "relative" }}>
+          <svg style={{ position: "absolute", left: 14, top: 12, color: "var(--text-muted)" }} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input
+            className="form-input"
+            placeholder="Search by role, company, or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ width: "100%", paddingLeft: 42, paddingTop: 10, paddingBottom: 10, fontSize: "0.95rem" }}
+          />
+        </div>
+        <div style={{ flex: 1, maxWidth: 250, display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 500 }}>Status:</span>
+          <select
+            className="form-input"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            style={{ width: "100%", paddingTop: 10, paddingBottom: 10, fontSize: "0.95rem", cursor: "pointer" }}
+          >
+            <option value="All">All Statuses</option>
+            {STATUS_ORDER.map((s) => (
+              <option key={s} value={s}>{s} ({counts[s]})</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Kanban Board */}
-      <div className="kanban">
+      <div className="kanban" style={{ display: "flex", gap: 24, overflowX: "auto", paddingBottom: 16 }}>
         {activeStatuses.map((status) => (
-          <div className="kanban-col" key={status}>
-            <div className={`kanban-col-header ${KH_CLASS[status]}`}>
-              {STATUS_EMOJI[status]} {status} ({counts[status]})
+          <div className="kanban-col" key={status} style={{ minWidth: 280, flex: 1 }}>
+            <div className={`kanban-col-header ${KH_CLASS[status]}`} style={{ padding: "12px", borderRadius: "8px", fontSize: "0.8rem", fontWeight: 700, marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>{STATUS_EMOJI[status]} {status}</span>
+              <span style={{ background: "rgba(0,0,0,0.1)", padding: "2px 8px", borderRadius: 12, fontSize: "0.75rem" }}>{counts[status]}</span>
             </div>
-            {[...filteredApps].reverse().filter((a) => a.status === status).map((app) => {
-              const daysAgo = daysSince(app.sent_at || app.created_at);
-              return (
-                <div
-                  className="kanban-card"
-                  key={app.id}
-                  onClick={() => setExpandedId(expandedId === app.id ? null : app.id)}
-                >
-                  <div className="kc-role">{app.role}</div>
-                  <div className="kc-company">{app.company}</div>
-                  <div className="kc-meta">
-                    <span>{daysAgo === 0 ? "Today" : `${daysAgo}d ago`}</span>
-                    <span>{app.email.length > 20 ? app.email.slice(0, 20) + "…" : app.email}</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {[...filteredApps].reverse().filter((a) => a.status === status).map((app) => {
+                const daysAgo = daysSince(app.sent_at || app.created_at);
+                return (
+                  <div
+                    className="kanban-card"
+                    key={app.id}
+                    onClick={() => setExpandedId(expandedId === app.id ? null : app.id)}
+                    style={{ padding: "16px", borderRadius: "10px", boxShadow: "0 2px 5px rgba(0,0,0,0.04)", transition: "all 0.2s ease" }}
+                  >
+                    <div className="kc-role" style={{ fontSize: "0.95rem", marginBottom: 4 }}>{app.role}</div>
+                    <div className="kc-company" style={{ fontSize: "0.85rem", marginBottom: 12 }}>{app.company}</div>
+                    <div className="kc-meta" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid var(--border-light)", paddingTop: 10 }}>
+                      <span style={{ background: "var(--surface-hover)", padding: "2px 8px", borderRadius: 4, fontSize: "0.7rem", fontWeight: 600, color: "var(--text-secondary)" }}>
+                        {daysAgo === 0 ? "Today" : `${daysAgo}d ago`}
+                      </span>
+                      <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>
+                        {app.email.length > 22 ? app.email.slice(0, 22) + "…" : app.email}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         ))}
       </div>
