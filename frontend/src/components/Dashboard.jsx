@@ -300,118 +300,185 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
 
         return (
           <div className="modal-overlay" onClick={() => setExpandedId(null)}>
-            <div className="modal" onClick={(ev) => ev.stopPropagation()} style={{ maxWidth: 720, width: "95%" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <div className="modal" onClick={(ev) => ev.stopPropagation()} style={{ maxWidth: 850, width: "95%", padding: 0, overflow: "hidden" }}>
+              
+              {/* Fancy Modal Header */}
+              <div style={{ 
+                background: "linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%)", 
+                padding: "24px 30px", 
+                color: "white",
+                display: "flex", 
+                justifyContent: "space-between", 
+                alignItems: "flex-start" 
+              }}>
                 <div>
-                  <h3 style={{ margin: 0 }}>{app.role} at {app.company}</h3>
-                  <div style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginTop: 4 }}>
-                    {app.email} · {(app.created_at || "").slice(0, 10)}
+                  <h3 style={{ margin: "0 0 8px 0", fontSize: "1.4rem", fontWeight: 700, color: "white" }}>
+                    {app.role} <span style={{ opacity: 0.8, fontWeight: 400 }}>at</span> {app.company}
+                  </h3>
+                  <div style={{ fontSize: "0.85rem", opacity: 0.9, display: "flex", gap: 15, alignItems: "center" }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                      {app.email}
+                    </span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                      {(app.created_at || "").slice(0, 10)}
+                    </span>
                   </div>
                 </div>
-                <span className={`status-badge ${BADGE_CLASS[app.status]}`}>{app.status}</span>
+                <div style={{ background: "rgba(255,255,255,0.2)", padding: "6px 12px", borderRadius: 20, fontSize: "0.85rem", fontWeight: 600, backdropFilter: "blur(4px)" }}>
+                  {app.status}
+                </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 20 }}>
-                <div>
-                  <div className="form-group">
-                    <label className="form-label">To</label>
-                    <input className="form-input" value={e.email || app.email}
-                      onChange={(ev) => setEdit(app.id, "email", ev.target.value)} />
+              {/* Modal Body */}
+              <div style={{ padding: "30px", display: "grid", gridTemplateColumns: "1.8fr 1fr", gap: 30 }}>
+                
+                {/* Left Column: Editor */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  <div style={{ display: "flex", gap: 15 }}>
+                    <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+                      <label className="form-label" style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>To Email</label>
+                      <input className="form-input" value={e.email || app.email}
+                        onChange={(ev) => setEdit(app.id, "email", ev.target.value)} 
+                        style={{ background: "var(--surface-hover)" }} />
+                    </div>
+                    <div className="form-group" style={{ flex: 2, marginBottom: 0 }}>
+                      <label className="form-label" style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Subject Line</label>
+                      <input className="form-input" value={e.subject || app.subject}
+                        onChange={(ev) => setEdit(app.id, "subject", ev.target.value)} 
+                        style={{ background: "var(--surface-hover)", fontWeight: 600 }} />
+                    </div>
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">Subject</label>
-                    <input className="form-input" value={e.subject || app.subject}
-                      onChange={(ev) => setEdit(app.id, "subject", ev.target.value)} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Body</label>
-                    <textarea className="form-textarea" style={{ minHeight: 160 }}
+                  
+                  <div className="form-group" style={{ flex: 1, display: "flex", flexDirection: "column", marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em", display: "flex", justifyContent: "space-between" }}>
+                      Message Body
+                      <span style={{ cursor: "pointer", color: "var(--accent)" }} onClick={(ev) => { ev.stopPropagation(); copyToClipboard(e.body || app.body); }}>
+                        Copy Text
+                      </span>
+                    </label>
+                    <textarea className="form-textarea" style={{ flex: 1, minHeight: 280, fontSize: "0.9rem", lineHeight: 1.6, background: "var(--surface-hover)", border: "1px solid var(--border-light)" }}
                       value={e.body || app.body}
                       onChange={(ev) => setEdit(app.id, "body", ev.target.value)} />
                   </div>
-                  <div className="btn-group">
-                    <button className="btn btn-secondary btn-sm" onClick={() => handleSaveEdits(app)}
-                      disabled={isLoading}>Save Edits</button>
-                    <button className="btn btn-ghost btn-sm" onClick={(ev) => { ev.stopPropagation(); copyToClipboard(e.body || app.body); }}>
-                      Copy Body
+                  
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <button className="btn btn-secondary" onClick={() => handleSaveEdits(app)} disabled={isLoading}>
+                      Save Changes
                     </button>
                   </div>
                 </div>
 
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", lineHeight: 1.7 }}>
-                    <div><strong>Type:</strong> {app.type}</div>
-                    <div><strong>Status:</strong> {app.status}</div>
-                    {app.sent_at && <div><strong>Sent:</strong> {app.sent_at.slice(0, 10)}</div>}
-                    {app.follow_up_count > 0 && <div><strong>Follow-ups:</strong> {app.follow_up_count}</div>}
+                {/* Right Column: Actions & Meta */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 24, borderLeft: "1px solid var(--border)", paddingLeft: 30 }}>
+                  
+                  {/* Meta Tags */}
+                  <div>
+                    <h4 style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.05em", marginBottom: 12 }}>Application Info</h4>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      <span style={{ padding: "4px 10px", background: "var(--surface-hover)", borderRadius: 12, fontSize: "0.75rem", border: "1px solid var(--border)" }}>
+                        🎯 {app.type}
+                      </span>
+                      {app.sent_at && (
+                        <span style={{ padding: "4px 10px", background: "var(--accent-subtle)", color: "var(--accent)", borderRadius: 12, fontSize: "0.75rem" }}>
+                          📤 Sent {sent_days === 0 ? "Today" : `${sent_days}d ago`}
+                        </span>
+                      )}
+                      {app.follow_up_count > 0 && (
+                        <span style={{ padding: "4px 10px", background: "var(--purple-bg)", color: "var(--purple)", borderRadius: 12, fontSize: "0.75rem" }}>
+                          👋 {app.follow_up_count} Follow-up{app.follow_up_count > 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  {app.status === "Draft" && (
-                    <button className="btn btn-primary" onClick={() => triggerSendConfirm(app, "send")}>
-                      Send Now
-                    </button>
-                  )}
+                  {/* Smart Actions Panel */}
+                  <div style={{ background: "var(--surface-hover)", borderRadius: "var(--radius)", padding: 16, border: "1px solid var(--border)" }}>
+                    <h4 style={{ fontSize: "0.85rem", fontWeight: 600, marginBottom: 12, color: "var(--text-primary)" }}>Next Steps</h4>
+                    
+                    {app.status === "Draft" && (
+                      <button className="btn btn-primary" style={{ width: "100%", padding: "10px", display: "flex", justifyContent: "center", gap: 8 }} onClick={() => triggerSendConfirm(app, "send")}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        Send Application Now
+                      </button>
+                    )}
 
-                  {app.status === "Sent" && (
-                    <div className="btn-group" style={{ flexDirection: "column" }}>
-                      <div className="btn-group">
-                        <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Replied")}>Replied</button>
-                        <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Interview Scheduled")}>Interview</button>
-                        <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Rejected")}>Rejected</button>
+                    {app.status === "Sent" && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {sent_days >= (app.follow_up_days || 3) ? (
+                          <button className="btn btn-primary" style={{ width: "100%" }} onClick={() => triggerSendConfirm(app, "follow-up")}>
+                            Send Follow-up ({sent_days}d ago)
+                          </button>
+                        ) : (
+                          <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", textAlign: "center", padding: "8px 0" }}>
+                            Wait {Math.max(1, (app.follow_up_days || 3) - sent_days)} more days before following up.
+                          </div>
+                        )}
+                        {app.type === "Cold Email" && (
+                          <button className="btn btn-secondary" style={{ width: "100%", fontSize: "0.8rem" }} onClick={() => triggerSendConfirm(app, "resend")}>
+                            Resend with new angle
+                          </button>
+                        )}
                       </div>
-                      {app.type === "Cold Email" && (
-                        <button className="btn btn-secondary btn-sm" onClick={() => triggerSendConfirm(app, "resend")}>
-                          Resend with new angle ({sent_days}d ago)
-                        </button>
-                      )}
-                      {sent_days >= (app.follow_up_days || 3) && (
-                        <button className="btn btn-primary btn-sm" onClick={() => triggerSendConfirm(app, "follow-up")}>
-                          Send Follow-up ({sent_days}d ago)
-                        </button>
-                      )}
-                    </div>
-                  )}
+                    )}
 
-                  {app.status === "Follow-up Sent" && (
-                    <div className="btn-group" style={{ flexDirection: "column" }}>
-                      <div className="btn-group">
-                        <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Replied")}>Replied</button>
-                        <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Interview Scheduled")}>Interview</button>
-                        <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Ghosted")}>Ghosted</button>
+                    {app.status === "Follow-up Sent" && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {(app.follow_up_count || 0) < 3 && fu_days >= (CADENCE[app.follow_up_count] || 14) ? (
+                          <button className="btn btn-primary" style={{ width: "100%" }} onClick={() => triggerSendConfirm(app, "follow-up")}>
+                            Follow-up #{(app.follow_up_count || 0) + 1} ({fu_days}d ago)
+                          </button>
+                        ) : (app.follow_up_count || 0) < 3 ? (
+                          <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", textAlign: "center", padding: "8px 0" }}>
+                            Wait {Math.max(1, (CADENCE[app.follow_up_count] || 14) - fu_days)} days for next follow-up.
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: "0.8rem", color: "var(--red)", textAlign: "center", padding: "8px 0", background: "var(--red-bg)", borderRadius: 6 }}>
+                            Max follow-ups reached.
+                          </div>
+                        )}
                       </div>
-                      {(app.follow_up_count || 0) < 3 && fu_days >= (CADENCE[app.follow_up_count] || 14) && (
-                        <button className="btn btn-primary btn-sm" onClick={() => triggerSendConfirm(app, "follow-up")}>
-                          Follow-up #{(app.follow_up_count || 0) + 1} ({fu_days}d ago)
-                        </button>
-                      )}
-                      {(app.follow_up_count || 0) >= 3 && (
-                        <p style={{ color: "var(--red)", fontSize: "0.82rem" }}>3 follow-ups sent. Consider marking as Ghosted.</p>
-                      )}
-                    </div>
-                  )}
+                    )}
 
-                  {app.status === "Replied" && (
-                    <div className="btn-group">
-                      <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Interview Scheduled")}>Interview</button>
-                      <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Rejected")}>Rejected</button>
-                    </div>
-                  )}
+                    {app.status === "Interview Scheduled" && (
+                      <div style={{ background: "var(--green-bg)", color: "var(--green)", padding: "12px", borderRadius: 6, textAlign: "center", fontWeight: 600, fontSize: "0.9rem" }}>
+                        🎉 Interview locked in!
+                      </div>
+                    )}
 
-                  {app.status === "Interview Scheduled" && (
+                    {(app.status === "Ghosted" || app.status === "Rejected") && (
+                      <div style={{ background: "var(--border-light)", color: "var(--text-muted)", padding: "12px", borderRadius: 6, textAlign: "center", fontSize: "0.9rem" }}>
+                        {app.status === "Ghosted" ? "👻 No response. Moved on." : "🛑 Rejected. On to the next."}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Manual Status Override */}
+                  {["Sent", "Follow-up Sent", "Replied", "Interview Scheduled"].includes(app.status) && (
                     <div>
-                      <p style={{ color: "var(--green)", fontSize: "0.84rem", marginBottom: 8 }}>Interview locked in!</p>
-                      <button className="btn btn-secondary btn-sm" onClick={() => handleStatusChange(app, "Rejected")}>Rejected</button>
+                      <h4 style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.05em", marginBottom: 10 }}>Update Status</h4>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                        {app.status !== "Replied" && app.status !== "Interview Scheduled" && (
+                          <button className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={() => handleStatusChange(app, "Replied")}>Reply</button>
+                        )}
+                        {app.status !== "Interview Scheduled" && (
+                          <button className="btn btn-secondary btn-sm" style={{ flex: 1, borderColor: "var(--green)", color: "var(--green)" }} onClick={() => handleStatusChange(app, "Interview Scheduled")}>Interview</button>
+                        )}
+                        <button className="btn btn-secondary btn-sm" style={{ flex: 1, borderColor: "var(--red)", color: "var(--red)" }} onClick={() => handleStatusChange(app, "Rejected")}>Reject</button>
+                        {app.status === "Follow-up Sent" && (
+                          <button className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={() => handleStatusChange(app, "Ghosted")}>Ghosted</button>
+                        )}
+                      </div>
                     </div>
                   )}
 
-                  {app.status === "Ghosted" && <p style={{ color: "var(--text-faint)", fontSize: "0.82rem" }}>No response. Move on.</p>}
-                  {app.status === "Rejected" && <p style={{ color: "var(--text-faint)", fontSize: "0.82rem" }}>On to the next one.</p>}
-
-                  <div style={{ borderTop: "1px solid var(--border)", paddingTop: 10, marginTop: 8 }}>
-                    <button className="btn btn-danger btn-sm" onClick={() => setDeleteConfirm(app)}>
-                      Delete
+                  <div style={{ marginTop: "auto", paddingTop: 20 }}>
+                    <button className="btn btn-ghost btn-sm" style={{ width: "100%", color: "var(--red)" }} onClick={() => setDeleteConfirm(app)}>
+                      Delete Application
                     </button>
                   </div>
+
                 </div>
               </div>
             </div>
