@@ -1,20 +1,5 @@
 [
     {
-        "id": "df23e17b",
-        "type": "Cold Email",
-        "company": "the company",
-        "role": "any role ",
-        "email": "bhosaleabhishek0511@gmail.com",
-        "subject": "AI & Data Science Graduate - Abhishek Bhosale",
-        "body": "Dear Hiring Manager,\n\nI am writing to you as Abhishek Bhosale, an AI & Data Science graduate, to convey my strong interest in exploring prospective roles within your organization. I am particularly eager to leverage my machine learning and data engineering capabilities in a dynamic environment like yours.\n\nMy professional background includes practical experience in the development and deployment of machine learning applications, the refinement of predictive models, and the construction of robust backend data systems. Specifically, my technical proficiencies cover MLOps pipelines utilizing Docker and MLflow, API development with FastAPI, and comprehensive SQL database management.\n\nI would appreciate the chance to elaborate on how my specialized technical skills can benefit your team's objectives. For your consideration, my resume is enclosed.\n\nSincerely,\nAbhishek Bhosale\nLinks: GitHub: https://github.com/just000Curious | Portfolio: https://abhishek-bhosale.vercel.app/ | LinkedIn: https://www.linkedin.com/in/abhishek-sambhaji-bhosale/",
-        "status": "Sent",
-        "follow_up_days": 3,
-        "follow_up_count": 0,
-        "created_at": "2026-08-02T23:32:46.957225",
-        "sent_at": "2026-08-02T18:03:32.311Z",
-        "follow_up_sent_at": null
-    },
-    {
         "id": "60d175b5",
         "type": "Job Application",
         "company": "NEXTASTRA",
@@ -30,18 +15,33 @@
         "follow_up_sent_at": null
     },
     {
-        "id": "ce05c6d2",
-        "type": "Cold Email",
-        "company": "the company",
-        "role": "any",
-        "email": "bhosaleabhishek0511@gmail.com",
-        "subject": "Proactive AI/ML Developer for the company",
-        "body": "Dear Hiring Manager,\n\nPardon the unsolicited email, but I'm reaching out on a bit of a whim to see if any exciting, perhaps even \"accidental,\" new AI/ML openings have mysteriously popped up at [Company Name] recently.\n\nMy name is Abhishek Bhosale, and I'm an AI & Data Science graduate passionate about transforming complex data challenges into scalable, production-ready machine learning solutions. I specialize in building robust MLOps pipelines with Docker and MLflow, crafting efficient backend APIs using FastAPI, and optimizing predictive models.\n\nFor instance, I recently developed and deployed \"PASE,\" a system that forecasts wind power generation and community demand with high accuracy, minimizing grid waste. This involved engineering a full-stack solution from XGBoost/Random Forest models to a containerized FastAPI backend and a live React dashboard deployed on Vercel. I'm also familiar with the latest in Generative AI, including RAG and LangChain.\n\nIf [Company Name] ever finds itself in need of someone who can not only build sophisticated AI models but also ensure they deliver real-world impact, I'd be thrilled to connect. My portfolio and GitHub are linked below.\n\nBest regards,\nAbhishek Bhosale\nPortfolio: https://abhishek-bhosale.vercel.app/\nGitHub: https://github.com/just000Curious\nLinkedIn: https://www.linkedin.com/in/abhishek-sambhaji-bhosale/\n\nBest regards,\nAbhishek Bhosale\nPortfolio: https://abhishek-bhosale.vercel.app/ | GitHub: https://github.com/just000Curious | LinkedIn: https://www.linkedin.com/in/abhishek-sambhaji-bhosale/",
+        "id": "8dde0386",
+        "type": "Job Application",
+        "company": "",
+        "role": "AI Engineer",
+        "email": "hr.ind@livebest4you.com",
+        "subject": "Application for AI Engineer (Freshers) - Abhishek Bhosale",
+        "body": "Dear Hiring Manager,\n\nI am writing to express my keen interest in the AI Engineer (Freshers) position. My hands-on experience in building and deploying machine learning applications, as demonstrated in projects like PASE and Credit Risk Modelling System, aligns well with your requirements.\n\nI have strong proficiency in Python, ML concepts (XGBoost, Scikit-learn), and MLOps tools like Docker and MLflow. Additionally, I possess familiarity with LLMs, RAG, and LangChain, which I understand is an added advantage for this role.\n\nI am eager to apply my skills and passion for AI solutions to your team.\n\nBest regards,\nAbhishek Bhosale\nPortfolio: https://abhishek-bhosale.vercel.app/ | GitHub: https://github.com/just000Curious | LinkedIn: https://www.linkedin.com/in/abhishek-sambhaji-bhosale/",
         "status": "Sent",
         "follow_up_days": 3,
         "follow_up_count": 0,
-        "created_at": "2026-08-03T23:35:20.569575",
-        "sent_at": "2026-08-03T18:08:02.786Z",
+        "created_at": "2026-08-04T00:34:49.535416",
+        "sent_at": "2026-08-03T19:05:17.391Z",
+        "follow_up_sent_at": null
+    },
+    {
+        "id": "ca2a36f3",
+        "type": "Job Application",
+        "company": "FREVOLT",
+        "role": "Backend Developer (Database) - Supabase",
+        "email": "careers@frevolt.co",
+        "subject": "Application for Backend Developer (Database) - Supabase - Abhishek Bhosale",
+        "body": "Dear Hiring Manager,\n\nI am writing to express my keen interest in the Backend Developer (Database) - Supabase role at FREVOLT. My experience in designing and optimizing PostgreSQL databases and developing robust backend systems directly aligns with your requirements.\n\nAt Konkan Railway Corporation Ltd., I mapped complex PostgreSQL schemas and engineered a Python-based No-Code SQL Generation Engine, demonstrating my ability to design and optimize databases and write complex SQL queries. My background also includes developing RESTful APIs with FastAPI and deploying scalable backend solutions. I am confident my expertise in PostgreSQL, SQL, and API development would be a strong asset to your team.\n\nBest regards,\nAbhishek Bhosale\nPortfolio: https://abhishek-bhosale.vercel.app/ | GitHub: https://github.com/just000Curious | LinkedIn: https://www.linkedin.com/in/abhishek-sambhaji-bhosale/",
+        "status": "Sent",
+        "follow_up_days": 3,
+        "follow_up_count": 0,
+        "created_at": "2026-08-04T00:46:44.531851",
+        "sent_at": "2026-08-03T19:17:05.857Z",
         "follow_up_sent_at": null
     }
 ]

@@ -162,6 +162,9 @@ try:
 except ImportError:
     pass
 
+from services.job_scorer import score_job
+from services.resume_parser import parse_resume
+
 class JobSearchRequest(BaseModel):
     query: str = ""
     location: str = ""
@@ -171,6 +174,7 @@ class JobSearchRequest(BaseModel):
 @app.post("/api/jobs/search")
 def search_jobs(req: JobSearchRequest):
     try:
+        # 1. Fetch raw jobs
         if is_adzuna_configured():
             jobs = fetch_jobs_adzuna(
                 query=req.query,
@@ -178,18 +182,33 @@ def search_jobs(req: JobSearchRequest):
                 country=req.country,
                 results_per_page=req.results_per_page
             )
-            return {"source": "Adzuna API", "jobs": jobs}
+            source = "Adzuna API"
         else:
-            # Fallback to sample data
             jobs = get_sample_jobs()
-            # Basic manual filtering for sample data
             if req.query:
                 q = req.query.lower()
                 jobs = [j for j in jobs if q in j["title"].lower() or q in j["description"].lower()]
             if req.location:
                 l = req.location.lower()
                 jobs = [j for j in jobs if l in j["location"].lower()]
-            return {"source": "Sample Data", "jobs": jobs[:req.results_per_page]}
+            jobs = jobs[:req.results_per_page]
+            source = "Sample Data"
+
+        # 2. Score jobs if resume exists
+        resume_bytes = load_resume_from_disk()
+        if resume_bytes and jobs:
+            try:
+                resume_text = parse_resume(resume_bytes)
+                for job in jobs:
+                    score_data = score_job(resume_text, job)
+                    job.update(score_data)
+                
+                # Sort jobs by match_score descending
+                jobs.sort(key=lambda x: x.get("match_score", 0), reverse=True)
+            except Exception as e:
+                print("Failed to score jobs:", e)
+        
+        return {"source": source, "jobs": jobs}
     except Exception as e:
         raise HTTPException(500, str(e))
 

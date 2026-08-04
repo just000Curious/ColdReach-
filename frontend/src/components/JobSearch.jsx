@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { searchJobs, generateJD, addApplication } from "../api";
 
-export default function JobSearch({ activeProfile, resumeText, onDraftCreated, toast }) {
+export default function JobSearch({ activeProfile, resumeText, onDraftCreated, toast, setGlobalLoading }) {
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
@@ -114,7 +114,23 @@ export default function JobSearch({ activeProfile, resumeText, onDraftCreated, t
                   <span className="tag tag-time">{job.posted_days_ago}d ago</span>
                   {job.job_type && <span className="tag">{job.job_type}</span>}
                   {job.work_mode && <span className="tag">{job.work_mode}</span>}
+                  {job.match_score !== undefined && (
+                    <span className="tag" style={{ 
+                      backgroundColor: job.recommendation === 'Apply' ? 'var(--green-bg)' : 'var(--amber-bg)', 
+                      color: job.recommendation === 'Apply' ? 'var(--green)' : 'var(--amber)',
+                      fontWeight: 'bold',
+                      border: `1px solid ${job.recommendation === 'Apply' ? 'var(--green)' : 'var(--amber)'}`
+                    }}>
+                      {job.match_score}% Match
+                    </span>
+                  )}
                 </div>
+                {job.missing_skills && job.missing_skills.length > 0 && (
+                  <div style={{ fontSize: "0.75rem", color: "var(--text-faint)", marginBottom: "8px" }}>
+                    Missing: {job.missing_skills.slice(0, 3).join(", ")}
+                    {job.missing_skills.length > 3 && " ..."}
+                  </div>
+                )}
                 <p className="job-desc">{job.description.substring(0, 150)}...</p>
                 <div className="job-actions">
                   <a href={job.url} target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-sm" style={{ flex: 1, textAlign: "center" }}>
