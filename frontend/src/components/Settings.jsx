@@ -76,9 +76,17 @@ export default function Settings({ resumeReady, setResumeReady, setResumeText, t
             </div>
           </div>
           <div className="metric">
-            <div className="metric-label">Tokens Used</div>
+            <div className="metric-label">Tokens Used (Today)</div>
             <div className="metric-value">
               <span style={{ color: "var(--accent)" }}>{status.total_tokens ? status.total_tokens.toLocaleString() : "0"}</span>
+            </div>
+          </div>
+          <div className="metric">
+            <div className="metric-label">Tokens Left (Today)</div>
+            <div className="metric-value">
+              <span style={{ color: status.tokens_left < 100000 ? "var(--red)" : "var(--green)" }}>
+                {status.tokens_left ? status.tokens_left.toLocaleString() : "0"}
+              </span>
             </div>
           </div>
         </div>

@@ -20,15 +20,22 @@ def get_token_usage() -> int:
         return 0
     try:
         with open(USAGE_FILE, "r") as f:
-            return json.load(f).get("tokens", 0)
+            data = json.load(f)
+            # If the date has changed, reset to 0
+            stored_date = data.get("date")
+            today = datetime.now().strftime("%Y-%m-%d")
+            if stored_date != today:
+                return 0
+            return data.get("tokens", 0)
     except:
         return 0
 
 def add_token_usage(tokens: int) -> None:
     current = get_token_usage()
+    today = datetime.now().strftime("%Y-%m-%d")
     try:
         with open(USAGE_FILE, "w") as f:
-            json.dump({"tokens": current + tokens}, f)
+            json.dump({"tokens": current + tokens, "date": today}, f)
     except:
         pass
 

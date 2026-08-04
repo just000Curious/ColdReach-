@@ -435,6 +435,9 @@ def send(req: SendEmailRequest):
 
 @app.get("/api/status")
 def system_status():
+    used = get_token_usage()
+    limit = int(os.environ.get("TOKEN_DAILY_LIMIT", 4000000)) # Gemini free tier daily limit approx
+    
     return {
         "gemini_api": bool(os.environ.get("GEMINI_API_KEY", "").strip('" ')),
         "email_configured": bool(
@@ -443,7 +446,9 @@ def system_status():
         ),
         "email_address": os.environ.get("EMAIL_SENDER_ADDRESS", "").strip('" '),
         "resume_exists": load_resume_from_disk() is not None,
-        "total_tokens": get_token_usage()
+        "total_tokens": used,
+        "tokens_left": max(0, limit - used),
+        "token_limit": limit
     }
 
 
