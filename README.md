@@ -1,4 +1,4 @@
-# ColdReach 🚀
+# ColdReach
 
 **ColdReach** is an AI-powered, multi-profile cold emailing and job application tracking platform. It leverages Google's Gemini Vision and LLM models to instantly parse job descriptions, LinkedIn flyers, and cold outreach targets, mapping them directly to your uploaded resume to generate highly personalized, human-sounding emails.
 
