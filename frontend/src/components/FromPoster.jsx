@@ -20,7 +20,7 @@ export default function FromPoster({ profile, resumeText, onDraftCreated, toast,
           const blob = item.getAsFile();
           if (blob && blob.type.startsWith('image/')) {
             setFile(blob);
-            setPreview(URL.createObjectURL(blob));
+            setPreview((prev) => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(blob); });
             setExtracted(null);
             setError("");
           }
@@ -31,11 +31,15 @@ export default function FromPoster({ profile, resumeText, onDraftCreated, toast,
     return () => window.removeEventListener("paste", handlePaste);
   }, []);
 
+  useEffect(() => {
+    return () => { if (preview) URL.revokeObjectURL(preview); };
+  }, [preview]);
+
   function handleFile(e) {
     const f = e.target.files[0];
     if (!f) return;
     setFile(f);
-    setPreview(URL.createObjectURL(f));
+    setPreview((prev) => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(f); });
   }
 
   async function handleGenerate() {
@@ -71,7 +75,7 @@ export default function FromPoster({ profile, resumeText, onDraftCreated, toast,
         toast("No email found in poster! Draft saved. Please add the email manually in the Dashboard.", "error");
       }
 
-      await addApplication({
+      const res = await addApplication({
         app_type: "Job Application",
         company: result.extracted_company,
         role: result.extracted_title,
@@ -84,7 +88,7 @@ export default function FromPoster({ profile, resumeText, onDraftCreated, toast,
       setPreview(null);
       setOverrideEmail("");
       setOverrideTitle("");
-      onDraftCreated();
+      if (onDraftCreated) onDraftCreated(res.id);
     } catch (err) {
       toast(err.message, "error");
     } finally {

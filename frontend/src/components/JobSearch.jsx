@@ -41,7 +41,7 @@ export default function JobSearch({ activeProfile, resumeText, onDraftCreated, t
         override_title: job.title,
       });
 
-      await addApplication({
+      const appRes = await addApplication({
         app_type: "Job Search",
         company: res.company_name || job.company,
         role: res.extracted_title || job.title,
@@ -50,7 +50,7 @@ export default function JobSearch({ activeProfile, resumeText, onDraftCreated, t
         body: res.body,
       });
 
-      onDraftCreated();
+      if (onDraftCreated) onDraftCreated(appRes.id);
     } catch (err) {
       toast("Draft generation failed: " + err.message, "error");
     } finally {

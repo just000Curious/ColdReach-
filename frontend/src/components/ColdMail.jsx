@@ -27,7 +27,7 @@ export default function ColdMail({ profile, resumeText, onDraftCreated, toast, s
         tone: tone,
       });
 
-      await addApplication({
+      const res = await addApplication({
         app_type: "Cold Email",
         company: draft.company_name,
         role: role || "General",
@@ -39,7 +39,7 @@ export default function ColdMail({ profile, resumeText, onDraftCreated, toast, s
       setEmail("");
       setRole("");
       setCompanyInfo("");
-      onDraftCreated();
+      if (onDraftCreated) onDraftCreated(res.id);
     } catch (err) {
       toast(err.message, "error");
     } finally {

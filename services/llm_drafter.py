@@ -4,6 +4,7 @@ import re
 import time
 import base64
 import requests
+from typing import List, Dict, Any
 from services.db import add_token_usage
 
 
@@ -123,6 +124,54 @@ def call_gemini_vision(prompt: str, image_bytes: bytes, json_mode: bool = False)
             raise
     raise ValueError(f"Gemini Vision API failed after 3 retries. Last error: {last_error}")
 
+def call_gemini_pdf(prompt: str, pdf_bytes: bytes, json_mode: bool = False) -> str:
+    """Call Gemini with a PDF for robust text extraction."""
+    api_key = _get_api_key()
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+
+    b64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
+
+    payload = {
+        "contents": [{
+            "parts": [
+                {"text": prompt},
+                {"inline_data": {"mime_type": "application/pdf", "data": b64_pdf}},
+            ]
+        }],
+        "generationConfig": {"temperature": 0.1},
+    }
+    if json_mode:
+        payload["generationConfig"]["responseMimeType"] = "application/json"
+
+    headers = {"Content-Type": "application/json"}
+
+    last_error = None
+    for attempt in range(3):
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=120)
+            if response.status_code in (503, 429, 500):
+                time.sleep(2 ** (attempt + 1))
+                last_error = f"{response.status_code}: {response.text[:200]}"
+                continue
+            response.raise_for_status()
+            data = response.json()
+            if "usageMetadata" in data:
+                add_token_usage(data["usageMetadata"].get("totalTokenCount", 0))
+            raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
+            return _strip_markdown_fences(raw_text)
+        except requests.exceptions.Timeout:
+            last_error = "Timeout"
+            if attempt < 2:
+                time.sleep(2 ** (attempt + 1))
+                continue
+        except requests.exceptions.HTTPError as e:
+            last_error = str(e)
+            if attempt < 2:
+                time.sleep(2 ** (attempt + 1))
+                continue
+            raise
+    raise ValueError(f"Gemini API failed after 3 retries. Last error: {last_error}")
+
 
 # ══════════════════════════════════════════════════════════════════
 # EXTRACTION FUNCTIONS (Auto-fill from JD or Poster)
@@ -175,6 +224,29 @@ Return ONLY a JSON object with those 4 keys. If any field cannot be found, use a
     )
 
 
+def extract_leads(pdf_bytes: bytes) -> List[Dict[str, str]]:
+    """Extract a list of roles, companies, and HR emails from a raw PDF file using Gemini Vision."""
+    prompt = """Analyze the attached PDF, which contains a list of jobs, roles, or contacts.
+Extract all the leads you can find. For each lead, identify:
+- "role": The job title or position.
+- "company": The name of the company.
+- "hr_email": The email address of the HR person, recruiter, or contact provided. If not found, leave as empty string.
+
+Return ONLY a JSON array of objects, e.g. [{"role": "...", "company": "...", "hr_email": "..."}]. If none found, return [].
+"""
+
+    try:
+        result = call_gemini_pdf(prompt, pdf_bytes, json_mode=True)
+        data = json.loads(result)
+        if isinstance(data, list):
+            return data
+        elif isinstance(data, dict) and "leads" in data:
+            return data["leads"]
+        return []
+    except Exception as e:
+        print(f"Error extracting leads from PDF via Gemini: {e}")
+        return []
+
 # ══════════════════════════════════════════════════════════════════
 # EMAIL GENERATION FUNCTIONS
 # ══════════════════════════════════════════════════════════════════
@@ -186,9 +258,9 @@ def generate_cold_email(
     """Generate a cold outreach email (no JD, just reaching out)."""
     sender_name = sender_name.strip() if sender_name else "[Your Name]"
     links = []
-    if portfolio_url: links.append(f"Portfolio: {portfolio_url}")
-    if github_url: links.append(f"GitHub: {github_url}")
-    if linkedin_url: links.append(f"LinkedIn: {linkedin_url}")
+    if portfolio_url and portfolio_url.strip(): links.append(f"Portfolio: {portfolio_url.strip()}")
+    if github_url and github_url.strip(): links.append(f"GitHub: {github_url.strip()}")
+    if linkedin_url and linkedin_url.strip(): links.append(f"LinkedIn: {linkedin_url.strip()}")
     links_str = " | ".join(links)
 
     prompt = f"""You are an expert career outreach assistant. Write a cold outreach email to an HR manager.
@@ -235,9 +307,9 @@ def generate_jd_email(
     """Generate an application email based on a specific job description."""
     sender_name = sender_name.strip() if sender_name else "[Your Name]"
     links = []
-    if portfolio_url: links.append(f"Portfolio: {portfolio_url}")
-    if github_url: links.append(f"GitHub: {github_url}")
-    if linkedin_url: links.append(f"LinkedIn: {linkedin_url}")
+    if portfolio_url and portfolio_url.strip(): links.append(f"Portfolio: {portfolio_url.strip()}")
+    if github_url and github_url.strip(): links.append(f"GitHub: {github_url.strip()}")
+    if linkedin_url and linkedin_url.strip(): links.append(f"LinkedIn: {linkedin_url.strip()}")
     links_str = " | ".join(links)
 
     prompt = f"""You are an expert career outreach assistant. Write a job application email.
@@ -284,9 +356,9 @@ def rewrite_email(original_body: str, app_type: str, company: str, resume_text: 
     """Rewrite email with a new angle or phrasing."""
     sender_name = sender_name.strip() if sender_name else "[Your Name]"
     links = []
-    if portfolio_url: links.append(f"Portfolio: {portfolio_url}")
-    if github_url: links.append(f"GitHub: {github_url}")
-    if linkedin_url: links.append(f"LinkedIn: {linkedin_url}")
+    if portfolio_url and portfolio_url.strip(): links.append(f"Portfolio: {portfolio_url.strip()}")
+    if github_url and github_url.strip(): links.append(f"GitHub: {github_url.strip()}")
+    if linkedin_url and linkedin_url.strip(): links.append(f"LinkedIn: {linkedin_url.strip()}")
     links_str = " | ".join(links)
     
     if new_angle:
@@ -300,7 +372,7 @@ def rewrite_email(original_body: str, app_type: str, company: str, resume_text: 
 Do NOT just swap synonyms. Construct a completely fresh cold outreach email.
 Keep it professional, highly personalized, and concise.
 DO NOT use HTML tags like <br>. Use literal newline characters for spacing.
-CRITICAL: DO NOT include ANY sign-off, signature, "Best regards", or your name at the end. The system will append it automatically. End the email body with the final sentence's punctuation.
+CRITICAL: DO NOT include ANY sign-off, signature, "Best regards", your name, or any links/URLs at the end. The system will append the signature automatically. End the email body strictly with the final sentence's punctuation.
 
 Resume Context:
 {resume_text[:2000]}
@@ -315,7 +387,7 @@ Return ONLY the rewritten email body text. No subject line. No explanations."""
 Acknowledge briefly that you applied earlier and are following up, but pivot the focus to this new angle.
 Keep it punchy, professional, and short.
 DO NOT use HTML tags like <br>. Use literal newline characters for spacing.
-CRITICAL: DO NOT include ANY sign-off, signature, "Best regards", or your name at the end. The system will append it automatically. End the email body with the final sentence's punctuation.
+CRITICAL: DO NOT include ANY sign-off, signature, "Best regards", your name, or any links/URLs at the end. The system will append the signature automatically. End the email body strictly with the final sentence's punctuation.
 
 Resume Context:
 {resume_text[:2000]}
@@ -326,16 +398,26 @@ Original Email (MAY contain a signature, ignore it):
 Return ONLY the rewritten email body text. No subject line. No explanations."""
 
     result_body = call_gemini(prompt, json_mode=False, temperature=0.7).strip()
-    return result_body
+
+    if sender_name:
+        signature = f"\n\nBest regards,\n{sender_name}"
+        if links_str:
+            signature += f"\n{links_str}"
+    elif links_str:
+        signature = f"\n\n{links_str}"
+    else:
+        signature = ""
+
+    return result_body + signature
 
 
 def generate_follow_up(original_body: str, company: str, hr_name: str, sender_name: str = "", github_url: str = "", portfolio_url: str = "", linkedin_url: str = "") -> str:
     """Generate a polite follow-up email."""
     sender_name = sender_name.strip() if sender_name else "[Your Name]"
     links = []
-    if portfolio_url: links.append(f"Portfolio: {portfolio_url}")
-    if github_url: links.append(f"GitHub: {github_url}")
-    if linkedin_url: links.append(f"LinkedIn: {linkedin_url}")
+    if portfolio_url and portfolio_url.strip(): links.append(f"Portfolio: {portfolio_url.strip()}")
+    if github_url and github_url.strip(): links.append(f"GitHub: {github_url.strip()}")
+    if linkedin_url and linkedin_url.strip(): links.append(f"LinkedIn: {linkedin_url.strip()}")
     links_str = " | ".join(links)
     prompt = f"""Write a short, polite 2-3 sentence follow-up email.
 Context: I previously emailed {hr_name} at {company} about a job opportunity.
@@ -343,11 +425,85 @@ My original email: {original_body[:500]}
 
 Return ONLY the follow-up text. No placeholders, no subject line. Sound human and genuine.
 DO NOT use HTML tags like <br>. Use literal newline characters for spacing.
-CRITICAL: DO NOT include ANY sign-off, signature, "Best regards", or your name at the end. The system will append it automatically. End the email body with the final sentence's punctuation."""
+CRITICAL: DO NOT include ANY sign-off, signature, "Best regards", your name, or any links/URLs at the end. The system will append the signature automatically. End the email body strictly with the final sentence's punctuation."""
     result_body = call_gemini(prompt, json_mode=False, temperature=0.4).strip()
-    
-    signature = f"\n\nBest regards,\n{sender_name}" if sender_name else ""
-    if links_str:
-        signature += f"\n{links_str}"
-        
+
+    if sender_name:
+        signature = f"\n\nBest regards,\n{sender_name}"
+        if links_str:
+            signature += f"\n{links_str}"
+    elif links_str:
+        signature = f"\n\n{links_str}"
+    else:
+        signature = ""
+
     return result_body + signature
+
+def generate_hr_reply(hr_message: str, user_instructions: str, previous_email_body: str, company: str, resume_text: str, sender_name: str = "", github_url: str = "", portfolio_url: str = "", linkedin_url: str = "") -> str:
+    """Generate a reply to an HR's email based on user instructions and previous context."""
+    sender_name = sender_name.strip() if sender_name else "[Your Name]"
+    links = []
+    if portfolio_url and portfolio_url.strip(): links.append(f"Portfolio: {portfolio_url.strip()}")
+    if github_url and github_url.strip(): links.append(f"GitHub: {github_url.strip()}")
+    if linkedin_url and linkedin_url.strip(): links.append(f"LinkedIn: {linkedin_url.strip()}")
+    links_str = " | ".join(links)
+    prompt = f"""Write a professional reply to a Hiring Manager / HR at {company}.
+
+My Previous Email:
+{previous_email_body[:2000]}
+
+HR's Email:
+{hr_message[:3000]}
+
+My Quick Instructions / Answers for the Reply:
+{user_instructions}
+
+My Resume Context (for any additional info if needed):
+{resume_text[:2000]}
+
+Task: Draft the email reply body answering the HR's questions directly using my instructions. Keep it polite, professional, and concise.
+DO NOT use HTML tags like <br>. Use literal newline characters for spacing.
+CRITICAL: DO NOT include ANY sign-off, signature, "Best regards", your name, or any links/URLs at the end. The system will append the signature automatically. End the email body strictly with the final sentence's punctuation."""
+    
+    result_body = call_gemini(prompt, json_mode=False, temperature=0.3).strip()
+
+    if sender_name:
+        signature = f"\n\nBest regards,\n{sender_name}"
+        if links_str:
+            signature += f"\n{links_str}"
+    elif links_str:
+        signature = f"\n\n{links_str}"
+    else:
+        signature = ""
+
+    return result_body + signature
+
+
+def validate_email_body(body: str, sender_name: str = "") -> str:
+    """Post-generation validation: strip placeholders, HTML tags, and duplicate signatures."""
+    import re as _re
+
+    # Strip leaked HTML tags
+    body = _re.sub(r'<br\s*/?>', '\n', body)
+    body = _re.sub(r'</?(?:p|div|span|b|i|u|strong|em)[^>]*>', '', body)
+
+    # Replace common leftover placeholders
+    placeholders = ['[Your Name]', '[your name]', '[HR Name]', '[Hiring Manager Name]',
+                    '[Company Name]', '[Your Email]', '[Your Phone]']
+    for ph in placeholders:
+        if ph.lower() == '[your name]' and sender_name:
+            body = body.replace(ph, sender_name)
+            body = body.replace(ph.title(), sender_name)
+        else:
+            body = body.replace(ph, '')
+
+    # Remove duplicate "Best regards" blocks (keep only the last one)
+    parts = _re.split(r'(?i)\n\n\s*best\s+regards\s*,?\s*\n', body)
+    if len(parts) > 2:
+        # Keep everything before the first "Best regards" + the last signature block
+        body = parts[0] + '\n\nBest regards,\n' + parts[-1]
+
+    # Clean up excessive blank lines (3+ newlines -> 2)
+    body = _re.sub(r'\n{3,}', '\n\n', body)
+
+    return body.strip()

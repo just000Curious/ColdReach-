@@ -28,12 +28,12 @@ load_dotenv(override=True)
 from services.db import (
     get_applications, add_application, update_application, delete_application,
     save_resume_to_disk, load_resume_from_disk,
-    is_valid_email, bulk_delete_by_status, get_token_usage
+    is_valid_email, is_duplicate, bulk_delete_by_status, get_token_usage
 )
 from services.resume_parser import parse_resume
 from services.llm_drafter import (
     generate_cold_email, generate_jd_email, extract_from_jd, extract_from_poster,
-    rewrite_email, generate_follow_up,
+    rewrite_email, generate_follow_up, extract_leads, generate_hr_reply
 )
 from services.mailer import send_email
 
@@ -106,6 +106,17 @@ class RewriteRequest(BaseModel):
     company: str = ""
     resume_text: str = ""
     new_angle: str = ""
+    sender_name: str = ""
+    github_url: str = ""
+    portfolio_url: str = ""
+    linkedin_url: str = ""
+
+class ReplyRequest(BaseModel):
+    hr_message: str
+    user_instructions: str
+    previous_email_body: str
+    company: str
+    resume_text: str = ""
     sender_name: str = ""
     github_url: str = ""
     portfolio_url: str = ""
@@ -245,6 +256,23 @@ async def upload_resume(file: UploadFile = File(...)):
     save_resume_to_disk(pdf_bytes)
     return {"ok": True, "text": text, "size": len(pdf_bytes)}
 
+
+# ══════════════════════════════════════════════════════════════════
+# HR LEADS AUTO-MAILER ENDPOINT
+# ══════════════════════════════════════════════════════════════════
+
+@app.post("/api/leads/parse_pdf")
+async def parse_leads_pdf(file: UploadFile = File(...)):
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(400, "Only PDF files are accepted.")
+    pdf_bytes = await file.read()
+    try:
+        leads = extract_leads(pdf_bytes)
+        if not leads:
+            raise HTTPException(400, "Could not extract any leads from this PDF. Please ensure it contains readable job data.")
+        return {"ok": True, "leads": leads}
+    except Exception as e:
+        raise HTTPException(500, f"Error parsing leads PDF: {str(e)}")
 
 # ══════════════════════════════════════════════════════════════════
 # APPLICATIONS CRUD
@@ -409,6 +437,24 @@ def gen_rewrite(req: RewriteRequest):
         raise HTTPException(500, str(e))
 
 
+@app.post("/api/generate/reply")
+def gen_reply(req: ReplyRequest):
+    try:
+        text = generate_hr_reply(
+            hr_message=req.hr_message,
+            user_instructions=req.user_instructions,
+            previous_email_body=req.previous_email_body,
+            company=req.company,
+            resume_text=req.resume_text,
+            sender_name=req.sender_name,
+            github_url=req.github_url,
+            portfolio_url=req.portfolio_url,
+            linkedin_url=req.linkedin_url
+        )
+        return {"body": text}
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
 # ══════════════════════════════════════════════════════════════════
 # SEND EMAIL
 # ══════════════════════════════════════════════════════════════════
@@ -471,6 +517,8 @@ class AddAppRequest(BaseModel):
 
 @app.post("/api/applications")
 def create_application(req: AddAppRequest):
+    if req.email and is_duplicate(req.email, req.role):
+        raise HTTPException(409, f"A Draft or Sent application already exists for '{req.role}' at '{req.email}'. Check the Dashboard.")
     app_id = add_application(
         app_type=req.app_type,
         company=req.company,
@@ -480,3 +528,36 @@ def create_application(req: AddAppRequest):
         body=req.body,
     )
     return {"ok": True, "id": app_id}
+
+
+# ══════════════════════════════════════════════════════════════════
+# CSV EXPORT
+# ══════════════════════════════════════════════════════════════════
+
+from fastapi.responses import StreamingResponse
+import csv
+import io
+
+@app.get("/api/applications/export")
+def export_applications_csv():
+    apps = get_applications()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Role", "Company", "Email", "Type", "Status", "Created", "Sent", "Follow-ups"])
+    for a in apps:
+        writer.writerow([
+            a.get("role", ""),
+            a.get("company", ""),
+            a.get("email", ""),
+            a.get("type", ""),
+            a.get("status", ""),
+            (a.get("created_at") or "")[:10],
+            (a.get("sent_at") or "")[:10],
+            a.get("follow_up_count", 0),
+        ])
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=coldreach_applications.csv"},
+    )

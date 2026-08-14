@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   updateApplication, deleteApplication, sendEmail, bulkDelete,
-  generateFollowUp, generateRewrite,
+  generateFollowUp, generateRewrite, generateReply, exportCSV
 } from "../api";
 
 const STATUS_ORDER = ["Draft", "Sent", "Follow-up Sent", "Replied", "Interview Scheduled", "Rejected", "Ghosted"];
@@ -21,8 +21,12 @@ const KH_CLASS = {
 };
 const CADENCE = [3, 7, 14];
 
-export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, resumeText, profile }) {
+export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, resumeText, profile, initialExpandedId }) {
   const [expandedId, setExpandedId] = useState(null);
+
+  useEffect(() => {
+    if (initialExpandedId) setExpandedId(initialExpandedId);
+  }, [initialExpandedId]);
   const [editState, setEditState] = useState({});
   const [loading, setLoading] = useState({});
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -30,12 +34,28 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(null);
+  const [replyConfirm, setReplyConfirm] = useState(null);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterStatus, itemsPerPage]);
 
   function triggerSendConfirm(app, type) {
     const e = getEdit(app);
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!e.email || !emailRegex.test(e.email.trim())) {
-      toast("Invalid email address. Please fix it before sending.", "error");
+    
+    if (!e.email) {
+      toast("Email address cannot be empty.", "error");
+      return;
+    }
+    
+    const emails = e.email.split(",").map(em => em.trim());
+    const allValid = emails.every(em => emailRegex.test(em));
+    
+    if (!allValid) {
+      toast("Invalid email address format. Please fix it before sending.", "error");
       return;
     }
     setSendConfirm({ type, app, newAngle: "" });
@@ -57,7 +77,7 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
   apps.forEach((a) => (counts[a.status] = (counts[a.status] || 0) + 1));
   const activeStatuses = STATUS_ORDER.filter((s) => counts[s] > 0);
 
-  const filteredApps = apps.filter((a) => {
+  const filteredApps = [...apps].reverse().filter((a) => {
     const matchesSearch = !searchTerm ||
       a.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
       a.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -65,6 +85,9 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
     const matchesFilter = filterStatus === "All" || a.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
+
+  const totalPages = itemsPerPage === "All" ? 1 : Math.ceil(filteredApps.length / itemsPerPage);
+  const paginatedApps = itemsPerPage === "All" ? filteredApps : filteredApps.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const sentTotal = counts.Sent + counts["Follow-up Sent"] + counts.Replied + counts["Interview Scheduled"] + counts.Rejected + counts.Ghosted;
   const responseRate = sentTotal > 0 ? Math.round(((counts.Replied + counts["Interview Scheduled"]) / sentTotal) * 100) : 0;
@@ -74,7 +97,12 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
   }
 
   function getEdit(app) {
-    return editState[app.id] || { email: app.email, subject: app.subject, body: app.body };
+    const edits = editState[app.id] || {};
+    return {
+      email: edits.email !== undefined ? edits.email : app.email,
+      subject: edits.subject !== undefined ? edits.subject : app.subject,
+      body: edits.body !== undefined ? edits.body : app.body
+    };
   }
   function setEdit(id, field, value) {
     setEditState((prev) => ({
@@ -135,6 +163,28 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
     }
   }
 
+  async function handleSendReply(app) {
+    const e = getEdit(app);
+    setGlobalLoading(true);
+    try {
+      await sendEmail({ to_email: e.email, subject: e.subject, body: e.body, attach_resume: true });
+      await updateApplication(app.id, {
+        email: e.email,
+        subject: e.subject,
+        body: e.body,
+        status: "Follow-up Sent",
+        follow_up_sent_at: new Date().toISOString(),
+        follow_up_count: (app.follow_up_count || 0) + 1,
+      });
+      toast("Reply sent successfully!", "success");
+      onRefresh();
+    } catch (err) {
+      toast("Send failed: " + err.message, "error");
+    } finally {
+      setGlobalLoading(false);
+    }
+  }
+
   async function handleFollowUp(app) {
     const e = getEdit(app);
     setGlobalLoading(true);
@@ -148,7 +198,8 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
         portfolio_url: profile?.portfolio || "",
         linkedin_url: profile?.linkedin || "",
       });
-      await sendEmail({ to_email: e.email, subject: `Re: ${e.subject}`, body: fuBody, attach_resume: true });
+      const fuSubject = e.subject.startsWith("Re:") ? e.subject : `Re: ${e.subject}`;
+      await sendEmail({ to_email: e.email, subject: fuSubject, body: fuBody, attach_resume: true });
       await updateApplication(app.id, {
         status: "Follow-up Sent",
         follow_up_count: (app.follow_up_count || 0) + 1,
@@ -200,6 +251,34 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
     }
   }
 
+  async function handleGenerateReply(app, hrMessage, userInstructions) {
+    if (!hrMessage.trim()) return toast("Please paste the HR's email.", "error");
+    
+    setGlobalLoading(true);
+    try {
+      const { body: newBody } = await generateReply({ 
+        hr_message: hrMessage,
+        user_instructions: userInstructions,
+        previous_email_body: app.body || "",
+        company: app.company,
+        resume_text: resumeText,
+        sender_name: profile?.name || "",
+        github_url: profile?.github || "",
+        portfolio_url: profile?.portfolio || "",
+        linkedin_url: profile?.linkedin || "",
+      });
+      
+      setEdit(app.id, "body", newBody);
+      toast("Reply drafted! Review and hit Send.", "success");
+      setReplyConfirm(null);
+      setExpandedId(app.id);
+    } catch (err) {
+      toast("Reply generation failed: " + err.message, "error");
+    } finally {
+      setGlobalLoading(false);
+    }
+  }
+
   function daysSince(dateStr) {
     if (!dateStr) return 0;
     return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
@@ -212,6 +291,10 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
           <h2 style={{ fontSize: "1.4rem", fontWeight: 700, margin: 0, color: "var(--text-primary)" }}>Application Tracker</h2>
           <p style={{ margin: "4px 0 0 0", color: "var(--text-muted)", fontSize: "0.9rem" }}>Manage and track your cold outreach pipeline</p>
         </div>
+        <button className="btn btn-secondary btn-sm" onClick={exportCSV} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Export CSV
+        </button>
       </div>
 
       {/* Metrics */}
@@ -276,10 +359,12 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
           <div className="kanban-col" key={status} style={{ minWidth: 280, flex: 1 }}>
             <div className={`kanban-col-header ${KH_CLASS[status]}`} style={{ padding: "12px", borderRadius: "8px", fontSize: "0.8rem", fontWeight: 700, marginBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span>{STATUS_EMOJI[status]} {status}</span>
-              <span style={{ background: "rgba(0,0,0,0.1)", padding: "2px 8px", borderRadius: 12, fontSize: "0.75rem" }}>{counts[status]}</span>
+              <span style={{ background: "rgba(0,0,0,0.1)", padding: "2px 8px", borderRadius: 12, fontSize: "0.75rem" }}>{paginatedApps.filter(a => a.status === status).length}</span>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {[...filteredApps].reverse().filter((a) => a.status === status).map((app) => {
+              {paginatedApps
+              .filter((a) => a.status === status)
+              .map((app) => {
                 const daysAgo = daysSince(app.sent_at || app.created_at);
                 return (
                   <div
@@ -304,6 +389,51 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Pagination Controls */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24, padding: "16px 20px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--radius)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>Items per page:</span>
+          <select
+            className="form-input"
+            style={{ width: "auto", padding: "4px 8px", fontSize: "0.85rem", cursor: "pointer" }}
+            value={itemsPerPage}
+            onChange={(e) => setItemsPerPage(e.target.value === "All" ? "All" : Number(e.target.value))}
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value="All">All</option>
+          </select>
+          <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginLeft: 16 }}>
+            Showing {itemsPerPage === "All" ? filteredApps.length : Math.min(filteredApps.length, (currentPage - 1) * itemsPerPage + 1)} to {itemsPerPage === "All" ? filteredApps.length : Math.min(filteredApps.length, currentPage * itemsPerPage)} of {filteredApps.length} entries
+          </span>
+        </div>
+        
+        {itemsPerPage !== "All" && totalPages > 1 && (
+          <div style={{ display: "flex", gap: 8 }}>
+            <button 
+              className="btn btn-secondary" 
+              style={{ padding: "4px 12px", fontSize: "0.85rem" }}
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            >
+              Previous
+            </button>
+            <div style={{ display: "flex", alignItems: "center", padding: "0 8px", fontSize: "0.85rem", fontWeight: 500 }}>
+              Page {currentPage} of {totalPages}
+            </div>
+            <button 
+              className="btn btn-secondary" 
+              style={{ padding: "4px 12px", fontSize: "0.85rem" }}
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Bulk Cleanup */}
@@ -482,6 +612,19 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
                         🎉 Interview locked in!
                       </div>
                     )}
+                    
+                    {app.status === "Replied" && (
+                      <>
+                        <button className="btn btn-primary" style={{ width: "100%", padding: "10px", display: "flex", justifyContent: "center", gap: 8, marginBottom: 8 }} onClick={() => setReplyConfirm({ app, hrMessage: "", userInstructions: "" })}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
+                          Draft Reply to HR
+                        </button>
+                        <button className="btn btn-secondary" style={{ width: "100%", padding: "10px", display: "flex", justifyContent: "center", gap: 8 }} onClick={() => triggerSendConfirm(app, "reply")}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                          Send Reply Now
+                        </button>
+                      </>
+                    )}
 
                     {(app.status === "Ghosted" || app.status === "Rejected") && (
                       <div style={{ background: "var(--border-light)", color: "var(--text-muted)", padding: "12px", borderRadius: 6, textAlign: "center", fontSize: "0.9rem" }}>
@@ -566,6 +709,7 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
                 if (sendConfirm.type === "send") handleSend(sendConfirm.app);
                 else if (sendConfirm.type === "follow-up") handleFollowUp(sendConfirm.app);
                 else if (sendConfirm.type === "resend") handleResend(sendConfirm.app, sendConfirm.newAngle);
+                else if (sendConfirm.type === "reply") handleSendReply(sendConfirm.app);
                 setSendConfirm(null);
               }}>
                 Confirm {sendConfirm.type === "resend" ? "& Generate" : "Send"}
@@ -587,6 +731,47 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
               <button className="btn btn-secondary" onClick={() => setBulkDeleteConfirm(null)}>Cancel</button>
               <button className="btn btn-danger" onClick={() => { bulkDelete(bulkDeleteConfirm).then(onRefresh); setBulkDeleteConfirm(null); }}>
                 Delete All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reply to HR Modal */}
+      {replyConfirm && (
+        <div className="modal-overlay" onClick={() => setReplyConfirm(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 600 }}>
+            <h3>Draft Reply to HR</h3>
+            <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: 16 }}>
+              Paste the HR's email below, and add any specific instructions or answers (like your CTC, notice period, or availability).
+            </p>
+            
+            <div className="form-group">
+              <label className="form-label">HR's Email Text</label>
+              <textarea 
+                className="form-textarea" 
+                style={{ minHeight: 120 }}
+                placeholder="Paste the email you received here..."
+                value={replyConfirm.hrMessage}
+                onChange={(e) => setReplyConfirm({...replyConfirm, hrMessage: e.target.value})}
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">Quick Instructions / Answers</label>
+              <textarea 
+                className="form-textarea" 
+                style={{ minHeight: 80 }}
+                placeholder="e.g. My Current CTC is 5LPA, Notice period is 30 days."
+                value={replyConfirm.userInstructions}
+                onChange={(e) => setReplyConfirm({...replyConfirm, userInstructions: e.target.value})}
+              />
+            </div>
+            
+            <div className="modal-actions" style={{ marginTop: 24 }}>
+              <button className="btn btn-secondary" onClick={() => setReplyConfirm(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => handleGenerateReply(replyConfirm.app, replyConfirm.hrMessage, replyConfirm.userInstructions)}>
+                Generate Draft
               </button>
             </div>
           </div>

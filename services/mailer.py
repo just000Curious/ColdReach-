@@ -7,10 +7,13 @@ from email.mime.application import MIMEApplication
 from email.utils import formataddr
 
 
-def _validate_email(email: str) -> bool:
-    """Validate email format before attempting SMTP."""
+def _validate_email(email_str: str) -> bool:
+    """Validate email format before attempting SMTP. Allows comma-separated list."""
     pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-    return bool(re.match(pattern, email.strip()))
+    if not email_str:
+        return False
+    emails = [e.strip() for e in email_str.split(",")]
+    return all(bool(re.match(pattern, e)) for e in emails)
 
 
 def send_email(

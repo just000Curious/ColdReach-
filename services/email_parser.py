@@ -4,10 +4,12 @@ from typing import List
 def normalize_obfuscated_text(text: str) -> str:
     """Fixes common anti-bot email obfuscations before regex scanning."""
     text = re.sub(r'[\(\[\{]\s*(at|AT|At)\s*[\)\]\}]', '@', text)
-    text = re.sub(r'\s+at\s+', '@', text)
+    # Only replace ' at ' when flanked by likely email parts (word chars / dots)
+    text = re.sub(r'(?<=[a-zA-Z0-9._%+-])\s+at\s+(?=[a-zA-Z0-9.-])', '@', text)
     text = re.sub(r'[\(\[\{]\s*(dot|DOT|Dot)\s*[\)\]\}]', '.', text)
-    text = re.sub(r'\s+dot\s+', '.', text)
+    text = re.sub(r'(?<=[a-zA-Z0-9])\s+dot\s+(?=[a-zA-Z])', '.', text)
     return text
+
 
 def extract_emails(text: str) -> List[str]:
     clean_text = normalize_obfuscated_text(text)

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import "./App.css";
-import { getProfilesData, getResumeStatus, getApplications } from "./api";
+import { getProfilesData, getResumeStatus, getApplications, generateFollowUp, sendEmail, updateApplication } from "./api";
 import Sidebar from "./components/Sidebar";
 import ColdMail from "./components/ColdMail";
 import FromJD from "./components/FromJD";
@@ -28,6 +28,7 @@ export default function App() {
   const [toasts, setToasts] = useState([]);
   const [theme, setTheme] = useState("light");
   const [globalLoading, setGlobalLoading] = useState(false);
+  const [activeAppId, setActiveAppId] = useState(null);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -54,10 +55,57 @@ export default function App() {
     setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
   }
 
-  function handleDraftCreated() {
+  function handleDraftCreated(appId) {
+    if (appId) {
+      setActiveAppId(appId);
+    }
     toast("Draft created! Switch to Dashboard to review and send.");
     loadApps();
     setActiveTab("dash");
+  }
+
+  function handleNotificationClick(appId) {
+    setActiveAppId(appId);
+    setActiveTab("dash");
+  }
+
+  async function handleBulkFollowUp(dueApps) {
+    if (dueApps.length === 0) return;
+    setGlobalLoading(true);
+    let successCount = 0;
+    
+    // We execute sequentially because LLM generations can be rate-limited
+    for (const app of dueApps) {
+      try {
+        const { body: fuBody } = await generateFollowUp({
+          original_body: app.body,
+          company: app.company,
+          hr_name: "Hiring Manager",
+          sender_name: activeProfile?.name || "",
+          github_url: activeProfile?.github || "",
+          portfolio_url: activeProfile?.portfolio || "",
+          linkedin_url: activeProfile?.linkedin || "",
+        });
+        
+        const subj = app.subject.startsWith("Re:") ? app.subject : `Re: ${app.subject}`;
+        await sendEmail({ to_email: app.email, subject: subj, body: fuBody, attach_resume: true });
+        
+        await updateApplication(app.id, {
+          status: "Follow-up Sent",
+          follow_up_count: (app.follow_up_count || 0) + 1,
+          follow_up_sent_at: new Date().toISOString(),
+        });
+        successCount++;
+      } catch (err) {
+        toast(`Failed to follow up for ${app.company}: ${err.message}`, "error");
+      }
+    }
+    
+    setGlobalLoading(false);
+    if (successCount > 0) {
+      toast(`Successfully auto-drafted and sent ${successCount} follow-up(s)!`, "success");
+      loadApps();
+    }
   }
 
   return (
@@ -72,18 +120,26 @@ export default function App() {
         theme={theme}
         setTheme={setTheme}
         toast={toast}
+        onDraftCreated={handleDraftCreated}
       />
 
       <main className="main-content">
         {/* Top bar */}
         <div className="main-header">
-          <div className="main-header-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          <div className="main-header-left">
+            <div className="main-header-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            </div>
+            <div className="main-header-text">
+              <h1>ColdReach</h1>
+              <p>Send personalized job emails in 3 clicks</p>
+            </div>
           </div>
-          <div className="main-header-text">
-            <h1>ColdReach</h1>
-            <p>Send personalized job emails in 3 clicks</p>
-          </div>
+          <Notifications 
+            apps={apps} 
+            onNotificationClick={handleNotificationClick} 
+            onBulkFollowUp={handleBulkFollowUp} 
+          />
         </div>
 
         {/* Tabs */}
@@ -101,7 +157,6 @@ export default function App() {
 
         {/* Scrollable content area */}
         <div className="tab-content">
-          <Notifications apps={apps} />
 
           {activeTab === "search" && (
             <JobSearch 
@@ -122,7 +177,15 @@ export default function App() {
             <FromPoster profile={activeProfile} resumeText={resumeText} onDraftCreated={handleDraftCreated} toast={toast} setGlobalLoading={setGlobalLoading} />
           )}
           {activeTab === "dash" && (
-            <Dashboard apps={apps} onRefresh={loadApps} toast={toast} setGlobalLoading={setGlobalLoading} resumeText={resumeText} profile={activeProfile} />
+            <Dashboard 
+              apps={apps} 
+              onRefresh={loadApps} 
+              toast={toast} 
+              setGlobalLoading={setGlobalLoading} 
+              resumeText={resumeText} 
+              profile={activeProfile} 
+              initialExpandedId={activeAppId}
+            />
           )}
           {activeTab === "settings" && (
             <Settings resumeReady={resumeReady} setResumeReady={setResumeReady} setResumeText={setResumeText} toast={toast} />

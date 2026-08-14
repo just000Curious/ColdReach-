@@ -14,7 +14,9 @@ Built with a sleek, Linear-inspired SaaS aesthetic, it prioritizes speed, intell
 - **Contextual Resends:** Didn't get a reply? Hit "Resend with new angle", type in a new focus (e.g., "Emphasize my Python skills"), and the AI will completely restructure the email to highlight the new angle.
 - **Multi-Profile Support:** Manage multiple roles (e.g., Frontend Developer vs. UX Designer). Swap profiles instantly to adapt your emails to the persona you want to project.
 - **Smart Follow-ups:** Automatically tracks how many days have passed since you applied, giving you one-click intelligent follow-ups at 3, 7, and 14 days.
+- **Email Validation:** Built-in safeguards automatically strip leftover placeholders, duplicate signatures, and HTML tags before emails are generated.
 - **Kanban Tracker:** Track your drafts, sent emails, replies, and interviews on a beautiful drag-and-drop-style dashboard.
+- **CSV Export:** Export your entire job application pipeline to a CSV file for external tracking and analytics.
 
 ---
 

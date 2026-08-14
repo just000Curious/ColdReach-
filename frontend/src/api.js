@@ -62,10 +62,22 @@ export async function generatePoster(file, params) {
   }
   return res.json();
 }
+export async function parseLeadsPdf(file) {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${API}/leads/parse_pdf`, { method: "POST", body: form });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
 export const generateFollowUp = (data) =>
   request("/generate/followup", { method: "POST", body: JSON.stringify(data) });
 export const generateRewrite = (data) =>
   request("/generate/rewrite", { method: "POST", body: JSON.stringify(data) });
+export const generateReply = (data) =>
+  request("/generate/reply", { method: "POST", body: JSON.stringify(data) });
 
 // ── Send ──
 export const sendEmail = (data) =>
@@ -73,3 +85,8 @@ export const sendEmail = (data) =>
 
 // ── Status ──
 export const getStatus = () => request("/status");
+
+// ── Export ──
+export function exportCSV() {
+  window.open(`${API}/applications/export`, "_blank");
+}

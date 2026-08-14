@@ -43,7 +43,7 @@ export default function FromJD({ profile, resumeText, onDraftCreated, toast, set
         toast("No email found in JD! Draft saved. Please add the email manually in the Dashboard.", "error");
       }
 
-      await addApplication({
+      const res = await addApplication({
         app_type: "Job Application",
         company: result.extracted_company,
         role: result.extracted_title,
@@ -55,7 +55,7 @@ export default function FromJD({ profile, resumeText, onDraftCreated, toast, set
       setJdText("");
       setOverrideEmail("");
       setOverrideTitle("");
-      onDraftCreated();
+      if (onDraftCreated) onDraftCreated(res.id);
     } catch (err) {
       toast(err.message, "error");
     } finally {

@@ -4,6 +4,7 @@ import uuid
 import re
 import csv
 import io
+import shutil
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
@@ -27,7 +28,7 @@ def get_token_usage() -> int:
             if stored_date != today:
                 return 0
             return data.get("tokens", 0)
-    except:
+    except Exception:
         return 0
 
 def add_token_usage(tokens: int) -> None:
@@ -36,9 +37,28 @@ def add_token_usage(tokens: int) -> None:
     try:
         with open(USAGE_FILE, "w") as f:
             json.dump({"tokens": current + tokens, "date": today}, f)
-    except:
+    except Exception:
         pass
 
+
+BACKUPS_DIR = os.path.join(_DATA_DIR, "backups")
+
+def _backup_file(filepath: str) -> None:
+    """Create a daily backup of a file before overwriting it."""
+    if not os.path.exists(filepath):
+        return
+    if not os.path.exists(BACKUPS_DIR):
+        os.makedirs(BACKUPS_DIR)
+        
+    filename = os.path.basename(filepath)
+    today = datetime.now().strftime("%Y-%m-%d")
+    backup_path = os.path.join(BACKUPS_DIR, f"{today}_{filename}")
+    
+    if not os.path.exists(backup_path):
+        try:
+            shutil.copy2(filepath, backup_path)
+        except Exception:
+            pass
 
 def load_profiles_data() -> Dict[str, Any]:
     """Load profiles data. Migrates old single-profile format if necessary."""
@@ -65,6 +85,7 @@ def load_profiles_data() -> Dict[str, Any]:
 
 def save_profiles_data(data: Dict[str, Any]) -> None:
     """Save profiles data to disk permanently using atomic write."""
+    _backup_file(PROFILE_FILE)
     tmp_file = PROFILE_FILE + ".tmp"
     try:
         with open(tmp_file, "w", encoding="utf-8") as f:
@@ -118,6 +139,7 @@ def load_db() -> List[Dict[str, Any]]:
 
 def save_db(data: List[Dict[str, Any]]) -> None:
     """Write applications list to the JSON file using atomic write."""
+    _backup_file(DB_FILE)
     tmp_file = DB_FILE + ".tmp"
     try:
         with open(tmp_file, "w", encoding="utf-8") as f:
@@ -207,7 +229,10 @@ def bulk_delete_by_status(status: str) -> int:
 
 # ── Validation Helpers ───────────────────────────────────────────
 
-def is_valid_email(email: str) -> bool:
-    """Basic email format validation."""
+def is_valid_email(email_str: str) -> bool:
+    """Basic email format validation, allowing comma-separated emails."""
     pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-    return bool(re.match(pattern, email.strip()))
+    if not email_str:
+        return False
+    emails = [e.strip() for e in email_str.split(",")]
+    return all(bool(re.match(pattern, e)) for e in emails)
