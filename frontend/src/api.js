@@ -62,10 +62,10 @@ export async function generatePoster(file, params) {
   }
   return res.json();
 }
-export async function parseLeadsPdf(file) {
+export async function parseLeadsDocument(file) {
   const form = new FormData();
   form.append("file", file);
-  const res = await fetch(`${API}/leads/parse_pdf`, { method: "POST", body: form });
+  const res = await fetch(`${API}/leads/parse_document`, { method: "POST", body: form });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(err.detail || `HTTP ${res.status}`);

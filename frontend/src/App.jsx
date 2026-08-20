@@ -168,7 +168,7 @@ export default function App() {
             />
           )}
           {activeTab === "cold" && (
-            <ColdMail profile={activeProfile} resumeText={resumeText} onDraftCreated={handleDraftCreated} toast={toast} setGlobalLoading={setGlobalLoading} />
+            <ColdMail apps={apps} profile={activeProfile} resumeText={resumeText} onDraftCreated={handleDraftCreated} toast={toast} setGlobalLoading={setGlobalLoading} />
           )}
           {activeTab === "jd" && (
             <FromJD profile={activeProfile} resumeText={resumeText} onDraftCreated={handleDraftCreated} toast={toast} setGlobalLoading={setGlobalLoading} />

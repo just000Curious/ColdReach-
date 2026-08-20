@@ -224,19 +224,29 @@ Return ONLY a JSON object with those 4 keys. If any field cannot be found, use a
     )
 
 
-def extract_leads(pdf_bytes: bytes) -> List[Dict[str, str]]:
-    """Extract a list of roles, companies, and HR emails from a raw PDF file using Gemini Vision."""
-    prompt = """Analyze the attached PDF, which contains a list of jobs, roles, or contacts.
+def extract_leads(file_bytes: bytes, filename: str) -> List[Dict[str, str]]:
+    """Extract a list of roles, companies, HR emails, and skills from a raw PDF or Word file using Gemini."""
+    prompt = """Analyze the attached document, which contains a list of jobs, roles, or contacts.
 Extract all the leads you can find. For each lead, identify:
 - "role": The job title or position.
 - "company": The name of the company.
 - "hr_email": The email address of the HR person, recruiter, or contact provided. If not found, leave as empty string.
+- "skills": A comma-separated list of key skills required. If not found, leave as empty string.
 
-Return ONLY a JSON array of objects, e.g. [{"role": "...", "company": "...", "hr_email": "..."}]. If none found, return [].
+Return ONLY a JSON array of objects, e.g. [{"role": "...", "company": "...", "hr_email": "...", "skills": "..."}]. If none found, return [].
 """
 
     try:
-        result = call_gemini_pdf(prompt, pdf_bytes, json_mode=True)
+        if filename.endswith(".doc") or filename.endswith(".docx"):
+            import io
+            import docx
+            doc = docx.Document(io.BytesIO(file_bytes))
+            text = "\n".join([p.text for p in doc.paragraphs])
+            prompt_with_text = prompt + f"\n\nDOCUMENT CONTENT:\n{text[:20000]}"
+            result = call_gemini(prompt_with_text, json_mode=True, temperature=0.1)
+        else:
+            result = call_gemini_pdf(prompt, file_bytes, json_mode=True)
+            
         data = json.loads(result)
         if isinstance(data, list):
             return data
@@ -244,7 +254,7 @@ Return ONLY a JSON array of objects, e.g. [{"role": "...", "company": "...", "hr
             return data["leads"]
         return []
     except Exception as e:
-        print(f"Error extracting leads from PDF via Gemini: {e}")
+        print(f"Error extracting leads from document via Gemini: {e}")
         return []
 
 # ══════════════════════════════════════════════════════════════════

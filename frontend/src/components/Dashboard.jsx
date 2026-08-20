@@ -577,8 +577,13 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
                             Send Follow-up ({sent_days}d ago)
                           </button>
                         ) : (
-                          <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", textAlign: "center", padding: "8px 0" }}>
-                            Wait {Math.max(1, (app.follow_up_days || 3) - sent_days)} more days before following up.
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", textAlign: "center", padding: "8px 0" }}>
+                              Wait {Math.max(1, (app.follow_up_days || 3) - sent_days)} more days before following up.
+                            </div>
+                            <button className="btn btn-secondary" style={{ width: "100%", fontSize: "0.8rem", border: "1px dashed var(--border)" }} onClick={() => triggerSendConfirm(app, "follow-up")}>
+                              Force Follow-up Now
+                            </button>
                           </div>
                         )}
                         {app.type === "Cold Email" && (
@@ -595,13 +600,20 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
                           <button className="btn btn-primary" style={{ width: "100%" }} onClick={() => triggerSendConfirm(app, "follow-up")}>
                             Follow-up #{(app.follow_up_count || 0) + 1} ({fu_days}d ago)
                           </button>
-                        ) : (app.follow_up_count || 0) < 3 ? (
-                          <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", textAlign: "center", padding: "8px 0" }}>
-                            Wait {Math.max(1, (CADENCE[app.follow_up_count] || 14) - fu_days)} days for next follow-up.
-                          </div>
                         ) : (
-                          <div style={{ fontSize: "0.8rem", color: "var(--red)", textAlign: "center", padding: "8px 0", background: "var(--red-bg)", borderRadius: 6 }}>
-                            Max follow-ups reached.
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            {(app.follow_up_count || 0) < 3 ? (
+                              <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", textAlign: "center", padding: "8px 0" }}>
+                                Wait {Math.max(1, (CADENCE[app.follow_up_count] || 14) - fu_days)} days for next follow-up.
+                              </div>
+                            ) : (
+                              <div style={{ fontSize: "0.8rem", color: "var(--red)", textAlign: "center", padding: "8px 0", background: "var(--red-bg)", borderRadius: 6 }}>
+                                Max follow-ups reached.
+                              </div>
+                            )}
+                            <button className="btn btn-secondary" style={{ width: "100%", fontSize: "0.8rem", border: "1px dashed var(--border)" }} onClick={() => triggerSendConfirm(app, "follow-up")}>
+                              Force Follow-up Now
+                            </button>
                           </div>
                         )}
                       </div>

@@ -261,18 +261,19 @@ async def upload_resume(file: UploadFile = File(...)):
 # HR LEADS AUTO-MAILER ENDPOINT
 # ══════════════════════════════════════════════════════════════════
 
-@app.post("/api/leads/parse_pdf")
-async def parse_leads_pdf(file: UploadFile = File(...)):
-    if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(400, "Only PDF files are accepted.")
-    pdf_bytes = await file.read()
+@app.post("/api/leads/parse_document")
+async def parse_leads_document(file: UploadFile = File(...)):
+    name = file.filename.lower()
+    if not (name.endswith(".pdf") or name.endswith(".doc") or name.endswith(".docx")):
+        raise HTTPException(400, "Only PDF or Word documents are accepted.")
+    file_bytes = await file.read()
     try:
-        leads = extract_leads(pdf_bytes)
+        leads = extract_leads(file_bytes, name)
         if not leads:
-            raise HTTPException(400, "Could not extract any leads from this PDF. Please ensure it contains readable job data.")
+            raise HTTPException(400, "Could not extract any leads from this document. Please ensure it contains readable job data.")
         return {"ok": True, "leads": leads}
     except Exception as e:
-        raise HTTPException(500, f"Error parsing leads PDF: {str(e)}")
+        raise HTTPException(500, f"Error parsing leads document: {str(e)}")
 
 # ══════════════════════════════════════════════════════════════════
 # APPLICATIONS CRUD

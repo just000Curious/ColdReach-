@@ -1,12 +1,46 @@
 import { useState } from "react";
 import { generateCold, addApplication } from "../api";
 
-export default function ColdMail({ profile, resumeText, onDraftCreated, toast, setGlobalLoading }) {
+export default function ColdMail({ apps = [], profile, resumeText, onDraftCreated, toast, setGlobalLoading }) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("");
   const [companyInfo, setCompanyInfo] = useState("");
   const [tone, setTone] = useState("Professional and direct");
   const [error, setError] = useState("");
+  const [selectedApp, setSelectedApp] = useState(null);
+
+  const history = apps.filter(a => a.type === "Cold Email");
+
+  function handleSelectHistory(app) {
+    setSelectedApp(app);
+    setEmail(app.email || "");
+    setRole(app.role || "");
+    setCompanyInfo(app.company || "");
+  }
+
+  async function handleReuse() {
+    if (!selectedApp) return;
+    setGlobalLoading(true);
+    try {
+      const res = await addApplication({
+        app_type: "Cold Email",
+        company: selectedApp.company,
+        role: selectedApp.role || "General",
+        email: email.trim(),
+        subject: selectedApp.subject,
+        body: selectedApp.body,
+      });
+      setEmail("");
+      setRole("");
+      setCompanyInfo("");
+      setSelectedApp(null);
+      if (onDraftCreated) onDraftCreated(res.id);
+    } catch (err) {
+      toast(err.message, "error");
+    } finally {
+      setGlobalLoading(false);
+    }
+  }
 
   async function handleGenerate() {
     setError("");
@@ -54,6 +88,39 @@ export default function ColdMail({ profile, resumeText, onDraftCreated, toast, s
         Reach out to companies you're interested in — even without a job posting.
       </p>
 
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 2.5fr", gap: "24px" }}>
+        
+        {/* Left Column: History */}
+        <div style={{ borderRight: "1px solid var(--border)", paddingRight: "16px" }}>
+          <h3 style={{ fontSize: "0.9rem", fontWeight: 600, marginBottom: "12px", color: "var(--text-primary)" }}>Past Contacts</h3>
+          {history.length === 0 ? (
+            <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>No previous cold emails.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "500px", overflowY: "auto" }}>
+              {history.map(app => (
+                <div 
+                  key={app.id} 
+                  onClick={() => handleSelectHistory(app)}
+                  style={{ 
+                    padding: "10px", 
+                    borderRadius: "6px", 
+                    background: selectedApp?.id === app.id ? "var(--surface-hover)" : "transparent",
+                    border: selectedApp?.id === app.id ? "1px solid var(--accent)" : "1px solid var(--border)",
+                    cursor: "pointer",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  <div style={{ fontWeight: 600, fontSize: "0.8rem", color: "var(--text-primary)" }}>{app.company}</div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{app.email}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Form */}
+        <div>
+
       <div className="form-row">
         <div className="form-group">
           <label className="form-label">HR Email *</label>
@@ -99,9 +166,23 @@ export default function ColdMail({ profile, resumeText, onDraftCreated, toast, s
 
       {error && <p style={{ color: "var(--red)", fontSize: "0.84rem", marginBottom: 12 }}>{error}</p>}
 
-      <button className="btn btn-primary" onClick={handleGenerate}>
-        Generate Cold Email
-      </button>
+      <div style={{ display: "flex", gap: "12px" }}>
+        <button className="btn btn-primary" onClick={handleGenerate}>
+          {selectedApp ? "Generate Fresh Draft" : "Generate Cold Email"}
+        </button>
+        {selectedApp && (
+          <button className="btn btn-secondary" onClick={handleReuse}>
+            Reuse Exact Draft
+          </button>
+        )}
+        {selectedApp && (
+          <button className="btn btn-ghost" onClick={() => setSelectedApp(null)}>
+            Clear Selection
+          </button>
+        )}
+      </div>
+      </div>
+      </div>
     </div>
   );
 }

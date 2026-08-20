@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { getStatus, saveProfilesData, parseLeadsPdf, addApplication, generateCold, updateApplication } from "../api";
+import { getStatus, saveProfilesData, parseLeadsDocument, addApplication, generateCold, updateApplication } from "../api";
 import ProfileManager from "./ProfileManager";
 
 export default function Sidebar({ profilesData, setProfilesData, resumeReady, setResumeReady, resumeText, setResumeText, theme, setTheme, toast, onDraftCreated }) {
@@ -17,21 +17,21 @@ export default function Sidebar({ profilesData, setProfilesData, resumeReady, se
 
   const activeProfile = profilesData.profiles.find(p => p.id === profilesData.active_id) || profilesData.profiles[0] || {};
 
-  async function handlePdfUpload(e) {
+  async function handleDocumentUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
     setLoadingLeads(true);
     try {
-      toast("Parsing PDF...", "info");
-      const res = await parseLeadsPdf(file);
+      toast("Parsing document...", "info");
+      const res = await parseLeadsDocument(file);
       if (res.leads && res.leads.length > 0) {
         setLeads(res.leads);
         toast(`Found ${res.leads.length} leads!`, "success");
       } else {
-        toast("No leads found in this PDF.", "error");
+        toast("No leads found in this document.", "error");
       }
     } catch (err) {
-      toast("Error parsing PDF: " + err.message, "error");
+      toast("Error parsing document: " + err.message, "error");
     } finally {
       setLoadingLeads(false);
       e.target.value = null; // reset input
@@ -142,15 +142,15 @@ export default function Sidebar({ profilesData, setProfilesData, resumeReady, se
       <div className="sidebar-section">
         <div className="sidebar-section-title" style={{ color: "var(--accent)" }}>HR Leads Auto-Mailer</div>
         <p style={{ fontSize: "0.75rem", color: "var(--sidebar-muted)", marginBottom: 12, lineHeight: 1.4 }}>
-          Upload a PDF containing a list of roles, companies, and HR emails. Select a role below to automatically generate a personalized cold email draft.
+          Upload a Document (PDF/Word) containing a list of roles, companies, and HR emails. Select a role below to automatically generate a personalized cold email draft.
         </p>
 
         <input
           type="file"
-          accept="application/pdf"
+          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           style={{ display: "none" }}
           ref={fileInputRef}
-          onChange={handlePdfUpload}
+          onChange={handleDocumentUpload}
         />
         <button
           className="btn btn-secondary"
@@ -158,7 +158,7 @@ export default function Sidebar({ profilesData, setProfilesData, resumeReady, se
           onClick={() => fileInputRef.current?.click()}
           disabled={loadingLeads}
         >
-          {loadingLeads ? "Parsing PDF..." : "Upload Leads PDF"}
+          {loadingLeads ? "Parsing Document..." : "Upload Leads Document"}
         </button>
 
         {leads.length > 0 && (
@@ -166,7 +166,8 @@ export default function Sidebar({ profilesData, setProfilesData, resumeReady, se
             {leads.map((lead, i) => (
               <div key={i} style={{ background: "rgba(0,0,0,0.1)", padding: 8, borderRadius: 6, fontSize: "0.75rem" }}>
                 <div style={{ fontWeight: "bold", color: "var(--sidebar-heading)", marginBottom: 2 }}>{lead.role}</div>
-                <div style={{ color: "var(--sidebar-text)" }}>{lead.company}</div>
+                <div style={{ color: "var(--sidebar-text)", marginBottom: 2 }}>{lead.company}</div>
+                {lead.skills && <div style={{ color: "var(--accent)", fontSize: "0.65rem", marginBottom: 2 }}>Skills: {lead.skills}</div>}
                 <div style={{ color: "var(--sidebar-muted)", marginBottom: 6, fontSize: "0.7rem" }}>{lead.hr_email || "No email"}</div>
                 <button
                   className="btn btn-primary"

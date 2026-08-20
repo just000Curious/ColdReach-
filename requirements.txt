@@ -1,4 +1,8 @@
-streamlit
+fastapi
+uvicorn
+python-multipart
+python-docx
 pypdf
 python-dotenv
 requests
+pydantic
