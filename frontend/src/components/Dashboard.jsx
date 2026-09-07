@@ -505,13 +505,13 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
                   <div style={{ display: "flex", gap: 15 }}>
                     <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
                       <label className="form-label" style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>To Email</label>
-                      <input className="form-input" value={e.email || app.email}
+                      <input className="form-input" value={e.email}
                         onChange={(ev) => setEdit(app.id, "email", ev.target.value)} 
                         style={{ background: "var(--surface-hover)" }} />
                     </div>
                     <div className="form-group" style={{ flex: 2, marginBottom: 0 }}>
                       <label className="form-label" style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.05em" }}>Subject Line</label>
-                      <input className="form-input" value={e.subject || app.subject}
+                      <input className="form-input" value={e.subject}
                         onChange={(ev) => setEdit(app.id, "subject", ev.target.value)} 
                         style={{ background: "var(--surface-hover)", fontWeight: 600 }} />
                     </div>
@@ -525,7 +525,7 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
                       </span>
                     </label>
                     <textarea className="form-textarea" style={{ flex: 1, minHeight: 280, fontSize: "0.9rem", lineHeight: 1.6, background: "var(--surface-hover)", border: "1px solid var(--border-light)" }}
-                      value={e.body || app.body}
+                      value={e.body}
                       onChange={(ev) => setEdit(app.id, "body", ev.target.value)} />
                   </div>
                   

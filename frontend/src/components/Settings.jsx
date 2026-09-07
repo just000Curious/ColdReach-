@@ -25,8 +25,9 @@ export default function Settings({ resumeReady, setResumeReady, setResumeText, t
   async function handleResume(e) {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.type !== "application/pdf") {
-      return toast("Only PDF resumes are supported", "error");
+    const name = (file.name || "").toLowerCase();
+    if (!name.endsWith(".pdf") && !name.endsWith(".docx") && !name.endsWith(".doc")) {
+      return toast("Only PDF and Word documents (.pdf, .doc, .docx) are supported", "error");
     }
     setResumeLoading(true);
     try {
@@ -94,13 +95,13 @@ export default function Settings({ resumeReady, setResumeReady, setResumeText, t
         {/* Resume */}
         <h3 style={{ fontSize: "1.05rem", fontWeight: 600, marginBottom: 12 }}>General</h3>
         <div className="form-group" style={{ marginBottom: 30, padding: 20, border: "1px solid var(--border)", borderRadius: "var(--radius)" }}>
-          <label className="form-label">Resume Upload (PDF)</label>
+          <label className="form-label">Resume Upload (PDF, DOC, DOCX)</label>
           <p style={{ fontSize: "0.84rem", color: "var(--text-muted)", marginBottom: 12 }}>
-            Your resume is used by the AI to extract your skills and experience for cold emails.
+            Your resume is used by the AI to extract your skills and experience for cold emails. Supports PDF, DOC, and DOCX files.
           </p>
           <label className="btn btn-secondary" style={{ cursor: "pointer", display: "inline-block" }}>
-            {resumeLoading ? "Uploading..." : (resumeReady ? "Replace Resume (PDF)" : "Upload Resume (PDF)")}
-            <input type="file" accept="application/pdf" onChange={handleResume} hidden />
+            {resumeLoading ? "Uploading..." : (resumeReady ? "Replace Resume (PDF / DOCX)" : "Upload Resume (PDF / DOCX)")}
+            <input type="file" accept=".pdf,.docx,.doc,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleResume} hidden />
           </label>
         </div>
 

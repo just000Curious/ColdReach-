@@ -42,10 +42,15 @@ def _get_api_key() -> str:
     return api_key
 
 
+def _get_model_name() -> str:
+    return os.environ.get("GEMINI_MODEL", "gemini-2.5-flash").strip('" ')
+
+
 def call_gemini(prompt: str, json_mode: bool = False, temperature: float = 0.2) -> str:
     """Call Gemini text API with automatic retry on transient errors."""
     api_key = _get_api_key()
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+    model = _get_model_name()
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
 
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
@@ -75,7 +80,11 @@ def call_gemini(prompt: str, json_mode: bool = False, temperature: float = 0.2) 
             if attempt < 2:
                 time.sleep(2 ** (attempt + 1))
                 continue
-        except requests.exceptions.HTTPError:
+        except requests.exceptions.HTTPError as e:
+            last_error = str(e)
+            if attempt < 2:
+                time.sleep(2 ** (attempt + 1))
+                continue
             raise
     raise ValueError(f"Gemini API failed after 3 retries. Last error: {last_error}")
 
@@ -83,7 +92,8 @@ def call_gemini(prompt: str, json_mode: bool = False, temperature: float = 0.2) 
 def call_gemini_vision(prompt: str, image_bytes: bytes, json_mode: bool = False) -> str:
     """Call Gemini with an image (multimodal) for poster/flyer analysis."""
     api_key = _get_api_key()
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+    model = _get_model_name()
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
 
     b64_image = base64.b64encode(image_bytes).decode("utf-8")
 
@@ -120,14 +130,19 @@ def call_gemini_vision(prompt: str, image_bytes: bytes, json_mode: bool = False)
             if attempt < 2:
                 time.sleep(2 ** (attempt + 1))
                 continue
-        except requests.exceptions.HTTPError:
+        except requests.exceptions.HTTPError as e:
+            last_error = str(e)
+            if attempt < 2:
+                time.sleep(2 ** (attempt + 1))
+                continue
             raise
     raise ValueError(f"Gemini Vision API failed after 3 retries. Last error: {last_error}")
 
 def call_gemini_pdf(prompt: str, pdf_bytes: bytes, json_mode: bool = False) -> str:
     """Call Gemini with a PDF for robust text extraction."""
     api_key = _get_api_key()
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+    model = _get_model_name()
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
 
     b64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
 

@@ -242,19 +242,20 @@ def resume_status():
 
 @app.post("/api/resume")
 async def upload_resume(file: UploadFile = File(...)):
-    if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(400, "Only PDF files are accepted.")
-    pdf_bytes = await file.read()
+    name = file.filename.lower()
+    if not (name.endswith(".pdf") or name.endswith(".docx") or name.endswith(".doc")):
+        raise HTTPException(400, "Only PDF and Word documents (.pdf, .docx, .doc) are accepted.")
+    file_bytes = await file.read()
     try:
-        text = parse_resume(pdf_bytes)
+        text = parse_resume(file_bytes, filename=name)
         if not text.strip():
-            raise HTTPException(400, "Could not extract text from PDF.")
+            raise HTTPException(400, "Could not extract text from document.")
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(400, f"Error parsing PDF: {e}")
-    save_resume_to_disk(pdf_bytes)
-    return {"ok": True, "text": text, "size": len(pdf_bytes)}
+        raise HTTPException(400, f"Error parsing document: {e}")
+    save_resume_to_disk(file_bytes)
+    return {"ok": True, "text": text, "size": len(file_bytes)}
 
 
 # ══════════════════════════════════════════════════════════════════
