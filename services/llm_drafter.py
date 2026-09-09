@@ -43,7 +43,7 @@ def _get_api_key() -> str:
 
 
 def _get_model_name() -> str:
-    return os.environ.get("GEMINI_MODEL", "gemini-2.5-flash").strip('" ')
+    return os.environ.get("GEMINI_MODEL", "gemini-3.5-flash").strip('" ')
 
 
 def call_gemini(prompt: str, json_mode: bool = False, temperature: float = 0.2) -> str:
