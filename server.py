@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
+import requests
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -485,9 +486,14 @@ def send(req: SendEmailRequest):
 def system_status():
     used = get_token_usage()
     limit = int(os.environ.get("TOKEN_DAILY_LIMIT", 1000000)) # Gemini free tier: 250K TPM, 1500 RPD
-    
+    raw_key = os.environ.get("GEMINI_API_KEY", "").strip('" ')
+    masked_key = ""
+    if raw_key:
+        masked_key = raw_key[:4] + "..." + raw_key[-4:] if len(raw_key) > 8 else "***"
+
     return {
-        "gemini_api": bool(os.environ.get("GEMINI_API_KEY", "").strip('" ')),
+        "gemini_api": bool(raw_key),
+        "masked_gemini_key": masked_key,
         "email_configured": bool(
             os.environ.get("EMAIL_SENDER_ADDRESS", "").strip('" ')
             and os.environ.get("EMAIL_APP_PASSWORD", "").strip('" ')
@@ -501,8 +507,56 @@ def system_status():
 
 
 # ══════════════════════════════════════════════════════════════════
-# SETTINGS / CONFIG - Handled via .env directly
+# SETTINGS / GEMINI KEY CONFIGURATION
 # ══════════════════════════════════════════════════════════════════
+
+class GeminiKeyRequest(BaseModel):
+    api_key: str
+
+@app.post("/api/settings/gemini")
+def update_gemini_key(req: GeminiKeyRequest):
+    key = req.api_key.strip('" \r\n\t')
+    if not key:
+        raise HTTPException(400, "API key cannot be empty.")
+
+    # Probe Google Generative Language API to verify key and rate limits
+    try:
+        res = requests.get(
+            f"https://generativelanguage.googleapis.com/v1beta/models?key={key}",
+            timeout=10
+        )
+        if res.status_code == 400:
+            raise HTTPException(400, "Invalid Gemini API key. Please check your key from Google AI Studio.")
+        elif res.status_code == 403:
+            raise HTTPException(400, "Gemini API key is forbidden or lacks required permissions.")
+        elif res.status_code == 429:
+            raise HTTPException(400, "This Gemini API key has exceeded its rate quota. Please try another key.")
+        elif res.status_code != 200:
+            raise HTTPException(400, f"Gemini API returned status {res.status_code}: {res.text[:150]}")
+    except HTTPException:
+        raise
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(500, f"Failed to connect to Google API to verify key: {str(e)}")
+
+    # Update runtime memory immediately (takes effect instantly)
+    os.environ["GEMINI_API_KEY"] = key
+
+    # Persist to .env files so it survives restarts
+    try:
+        if _ENV_PATH.exists():
+            set_key(str(_ENV_PATH), "GEMINI_API_KEY", key, quote_mode="always")
+        root_env = _SERVER_DIR.parent / ".env"
+        if root_env.exists():
+            set_key(str(root_env), "GEMINI_API_KEY", key, quote_mode="always")
+    except Exception as e:
+        print("Warning: failed to persist to .env:", e)
+
+    masked = key[:4] + "..." + key[-4:] if len(key) > 8 else "***"
+    return {
+        "ok": True,
+        "message": "Gemini API key verified and updated successfully!",
+        "masked_key": masked
+    }
 
 
 # ══════════════════════════════════════════════════════════════════

@@ -83,10 +83,13 @@ export const generateReply = (data) =>
 export const sendEmail = (data) =>
   request("/send", { method: "POST", body: JSON.stringify(data) });
 
-// ── Status ──
+// ── Status & Settings ──
 export const getStatus = () => request("/status");
+export const updateGeminiKey = (apiKey) =>
+  request("/settings/gemini", { method: "POST", body: JSON.stringify({ api_key: apiKey }) });
 
 // ── Export ──
 export function exportCSV() {
   window.open(`${API}/applications/export`, "_blank");
 }
+

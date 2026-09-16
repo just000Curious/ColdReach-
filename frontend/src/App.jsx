@@ -29,6 +29,16 @@ export default function App() {
   const [theme, setTheme] = useState("light");
   const [globalLoading, setGlobalLoading] = useState(false);
   const [activeAppId, setActiveAppId] = useState(null);
+  const [notifSettings, setNotifSettings] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("coldreach_notif_settings") || "null");
+      return saved || { cadence: [3, 7, 14], soundEnabled: true, staleDraftDays: 3 };
+    } catch { return { cadence: [3, 7, 14], soundEnabled: true, staleDraftDays: 3 }; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("coldreach_notif_settings", JSON.stringify(notifSettings));
+  }, [notifSettings]);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -138,7 +148,8 @@ export default function App() {
           <Notifications 
             apps={apps} 
             onNotificationClick={handleNotificationClick} 
-            onBulkFollowUp={handleBulkFollowUp} 
+            onBulkFollowUp={handleBulkFollowUp}
+            notifSettings={notifSettings}
           />
         </div>
 
@@ -188,7 +199,7 @@ export default function App() {
             />
           )}
           {activeTab === "settings" && (
-            <Settings resumeReady={resumeReady} setResumeReady={setResumeReady} setResumeText={setResumeText} toast={toast} />
+            <Settings resumeReady={resumeReady} setResumeReady={setResumeReady} setResumeText={setResumeText} toast={toast} notifSettings={notifSettings} setNotifSettings={setNotifSettings} />
           )}
         </div>
       </main>
