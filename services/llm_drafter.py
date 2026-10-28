@@ -5,7 +5,27 @@ import time
 import base64
 import requests
 from typing import List, Dict, Any
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from services.db import add_token_usage
+
+# Anchor to project root for additional project details
+_DIR = os.path.dirname(os.path.abspath(__file__))
+_PROJECT_DETAILS_FILE = os.path.join(os.path.dirname(_DIR), "project_resume_details.md")
+
+def _load_project_details() -> str:
+    """Load additional project details (e.g. 7-agent LangGraph RAG platform) if available."""
+    if os.path.exists(_PROJECT_DETAILS_FILE):
+        try:
+            with open(_PROJECT_DETAILS_FILE, "r", encoding="utf-8") as f:
+                content = f.read()
+                return content[:4000]
+        except Exception:
+            pass
+    return ""
+
 
 
 class EmailDraftResponse:
@@ -287,30 +307,47 @@ def generate_cold_email(
     if github_url and github_url.strip(): links.append(f"GitHub: {github_url.strip()}")
     if linkedin_url and linkedin_url.strip(): links.append(f"LinkedIn: {linkedin_url.strip()}")
     links_str = " | ".join(links)
+    project_details = _load_project_details()
 
-    prompt = f"""You are an expert career outreach assistant. Write a cold outreach email to an HR manager.
+    prompt = f"""You are an expert career outreach assistant. Write a high-converting cold outreach email to an HR manager or recruiter.
 
 RULES:
-1. NEVER invent experience, projects, or degrees not in the resume.
-2. Keep the email under 100 words. Be direct and compelling.
+1. NEVER invent experience, projects, or degrees not in the resume or project details.
+2. Keep the email punchy, professional, and under 120 words.
 3. The sender's name is: {sender_name}
-4. Target Role: {target_role if target_role else "General inquiry"}
+4. Target Role: {target_role if target_role else "AI / Machine Learning / GenAI Engineer"}
 5. Company context: {company_info if company_info else "No specific company info provided"}
 6. Tone/Style: {tone}
 
+7. MANDATORY PROJECT SELECTION & ALIGNMENT:
+   Analyze the target role ('{target_role}') and company context:
+   - FOR GENAI / LLM / AGENTIC AI / AI ROLES:
+     (Keywords: GenAI, Generative AI, LLM, Agentic, Multi-Agent, LangGraph, LangChain, RAG, Pinecone, Vector DB, Prompt Engineering, NLP, AI Engineer, AI Developer, Artificial Intelligence)
+     YOU MUST EXPLICITLY HIGHLIGHT the candidate's flagship GenAI project:
+     --> **AI Academic Project Mentor** (from Infosys Springboard internship): Built a 7-agent sequential LangGraph state machine pipeline (feasibility check, scope, tech stack, Gantt milestone planning, risk matrix, documentation) with RAG-based mentoring using Pinecone Serverless vector search, persistent memory in Supabase PostgreSQL, and FastAPI backend.
+     --> Can also highlight his Agentic AI & Generative AI internship at Innomatics Research Labs (RAG workflows, embeddings, prompt engineering, LLM orchestration).
+     --> CRITICAL: DO NOT lead with or focus on classical tabular ML projects (such as PASE energy forecasting or credit risk modeling) for GenAI/LLM roles! GenAI recruiters specifically look for agentic and RAG architecture experience.
+   - FOR CLASSICAL ML / DATA SCIENCE / MLOPS ROLES:
+     (Keywords: Data Scientist, Machine Learning Engineer, MLOps, Predictive Modeling, Time Series, Tabular Data)
+     --> Highlight **PASE** (Predictive Analytics for Sustainable Energy: time-series wind/energy forecasting with XGBoost & Random Forest, Dockerized FastAPI) and/or **Credit Risk Modelling System** (XGBoost, Optuna tuning across 50+ trials, SMOTE, MLflow tracking).
+   - FOR HYBRID AI/ML ROLES:
+     --> Mention BOTH the 7-agent LangGraph GenAI pipeline and production ML models.
+   - Always reference specific project names, exact technologies (LangGraph, Pinecone, FastAPI, Supabase, Docker, MLflow, XGBoost), and concrete outcomes.
+
 EMAIL FORMAT:
 Start with "Dear [HR Name / Hiring Manager],"
-Write the body paragraphs. 
+Write the body paragraphs highlighting the exact relevant project and skills.
 CRITICAL: DO NOT include ANY sign-off, signature, "Best regards", or your name at the end. The system will append it automatically. End the email body with the final sentence's punctuation.
 
 Return ONLY a JSON object:
 - "hiring_manager_name": "Hiring Manager"
 - "company_name": company name or "the company"
-- "subject": compelling subject line
+- "subject": compelling subject line tailored to the target role
 - "body": the full email body text. VERY IMPORTANT: DO NOT use HTML tags like <br> or <p>. Use literal newline characters (\n) for line breaks.
 
-RESUME:
-{resume_text[:3000]}"""
+RESUME & BACKGROUND:
+{resume_text[:12000]}
+{f"\nADDITIONAL PROJECT DETAILS:\n{project_details}" if project_details else ""}"""
 
     result = call_gemini(prompt, json_mode=True, temperature=0.3)
     data = json.loads(result)
@@ -336,33 +373,48 @@ def generate_jd_email(
     if github_url and github_url.strip(): links.append(f"GitHub: {github_url.strip()}")
     if linkedin_url and linkedin_url.strip(): links.append(f"LinkedIn: {linkedin_url.strip()}")
     links_str = " | ".join(links)
+    project_details = _load_project_details()
 
-    prompt = f"""You are an expert career outreach assistant. Write a job application email.
+    prompt = f"""You are an expert career outreach assistant. Write a high-converting job application email tailored precisely to the job description.
 
 RULES:
-1. NEVER invent experience, projects, or degrees not in the resume.
-2. Keep the email under 120 words. Be specific about why this candidate fits THIS role.
+1. NEVER invent experience, projects, or degrees not in the resume or project details.
+2. Keep the email under 130 words. Be specific about why this candidate is a direct fit for THIS role.
 3. Sender name: {sender_name}
 4. Job Title: {job_title}
 5. Company: {company_name}
 6. Tone/Style: {tone}
 
+7. MANDATORY PROJECT SELECTION & ALIGNMENT:
+   Analyze the Job Title ('{job_title}') and Job Description text:
+   - IF the JD or Job Title involves Generative AI, GenAI, LLMs, Agentic AI, Agents, LangGraph, LangChain, RAG, Vector Databases, Prompt Engineering, NLP, or AI Engineering:
+     YOU MUST EXPLICITLY HIGHLIGHT the candidate's flagship GenAI project:
+     --> **AI Academic Project Mentor** (from Infosys Springboard internship): Built a 7-agent sequential LangGraph state machine pipeline (feasibility check, scope, tech stack, Gantt milestones, risk matrix, documentation) with RAG-based mentoring using Pinecone Serverless vector search, persistent memory in Supabase PostgreSQL, and FastAPI backend.
+     --> Can also highlight his Agentic AI & Generative AI internship at Innomatics Research Labs (RAG workflows, embeddings, prompt engineering, LLM orchestration).
+     --> CRITICAL: DO NOT default to or lead with classical tabular ML projects (such as PASE energy forecasting or credit risk modeling) when applying for GenAI/LLM roles! Recruiters want to see multi-agent pipelines and RAG architecture.
+   - IF the role is focused on Classical ML, Data Science, or MLOps (e.g. Data Scientist, ML Engineer, Time-Series Forecasting, Tabular Data, MLOps):
+     --> Highlight **PASE** (Predictive Analytics for Sustainable Energy: time-series wind/energy forecasting with XGBoost & Random Forest, Dockerized FastAPI) and/or **Credit Risk Modelling System** (XGBoost, Optuna tuning, SMOTE, MLflow tracking).
+   - IF the role is Hybrid (AI/ML Engineer, Data Scientist with GenAI):
+     --> Feature BOTH the 7-agent LangGraph GenAI pipeline and production ML models.
+   - Directly mirror 2-3 specific requirements from the JD with the candidate's verified stack.
+
 EMAIL FORMAT:
 Start with "Dear [HR Name / Hiring Manager],"
-Write the body paragraphs highlighting 2-3 specific skills matching the JD.
+Write the body paragraphs.
 CRITICAL: DO NOT include ANY sign-off, signature, "Best regards", or your name at the end. The system will append it automatically. End the email body with the final sentence's punctuation.
 
 Return ONLY a JSON object:
 - "hiring_manager_name": HR name if known, else "Hiring Manager"
 - "company_name": "{company_name}"
-- "subject": compelling subject line mentioning the role
+- "subject": compelling subject line mentioning the role and candidate name
 - "body": the full email body text. VERY IMPORTANT: DO NOT use HTML tags like <br> or <p>. Use literal newline characters (\n) for line breaks.
 
-RESUME:
-{resume_text[:3000]}
+RESUME & BACKGROUND:
+{resume_text[:12000]}
 
 JOB DESCRIPTION:
-{jd_text[:3000]}"""
+{jd_text[:5000]}
+{f"\nADDITIONAL PROJECT DETAILS:\n{project_details}" if project_details else ""}"""
 
     result = call_gemini(prompt, json_mode=True, temperature=0.2)
     data = json.loads(result)
@@ -385,22 +437,34 @@ def rewrite_email(original_body: str, app_type: str, company: str, resume_text: 
     if github_url and github_url.strip(): links.append(f"GitHub: {github_url.strip()}")
     if linkedin_url and linkedin_url.strip(): links.append(f"LinkedIn: {linkedin_url.strip()}")
     links_str = " | ".join(links)
+    project_details = _load_project_details()
     
     if new_angle:
         angle_instruction = f"The user requested this specific new angle/focus for the rewrite: '{new_angle}'. Ensure this is central to the new draft."
     else:
-        angle_instruction = "Try a completely new angle or emphasize different skills from the resume to make it fresh."
+        angle_instruction = "Try a completely new angle or emphasize different relevant skills from the resume to make it fresh and engaging."
+
+    project_guideline = """
+PROJECT SELECTION GUIDELINE:
+- If the original email, company, or requested angle involves Generative AI, LLMs, Agents, LangGraph, RAG, or AI Engineering:
+  Explicitly highlight the candidate's flagship GenAI project: the **AI Academic Project Mentor** (7-agent LangGraph pipeline, Pinecone Serverless RAG, Supabase PostgreSQL, FastAPI) and/or his Agentic AI internship at Innomatics Research Labs. Do not dilute with unrelated ML projects unless specifically requested.
+- If the focus is classical ML or Data Science: Highlight PASE (XGBoost/Random Forest energy forecasting) or Credit Risk Modelling (XGBoost, Optuna, MLflow).
+- Keep the email concise (under 120 words), complete, and end cleanly with a clear call to action."""
 
     if app_type == "Cold Email":
         prompt = f"""You are rewriting a Cold Outreach email to {company}. 
 {angle_instruction}
-Do NOT just swap synonyms. Construct a completely fresh cold outreach email.
-Keep it professional, highly personalized, and concise.
+{project_guideline}
+
+Do NOT just swap synonyms. Construct a completely fresh, coherent, and polished cold outreach email.
+Keep it professional, highly personalized, and under 120 words.
 DO NOT use HTML tags like <br>. Use literal newline characters for spacing.
+CRITICAL: DO NOT leave any sentence incomplete or cut off. End cleanly with a question or call to action.
 CRITICAL: DO NOT include ANY sign-off, signature, "Best regards", your name, or any links/URLs at the end. The system will append the signature automatically. End the email body strictly with the final sentence's punctuation.
 
 Resume Context:
-{resume_text[:2000]}
+{resume_text[:12000]}
+{f"\nProject Details:\n{project_details}" if project_details else ""}
 
 Original Email (MAY contain a signature, ignore it):
 {original_body}
@@ -409,20 +473,24 @@ Return ONLY the rewritten email body text. No subject line. No explanations."""
     else:
         prompt = f"""You are rewriting a Job Application email to {company}.
 {angle_instruction}
+{project_guideline}
+
 Acknowledge briefly that you applied earlier and are following up, but pivot the focus to this new angle.
-Keep it punchy, professional, and short.
+Keep it punchy, professional, and under 120 words.
 DO NOT use HTML tags like <br>. Use literal newline characters for spacing.
+CRITICAL: DO NOT leave any sentence incomplete or cut off. End cleanly with a question or call to action.
 CRITICAL: DO NOT include ANY sign-off, signature, "Best regards", your name, or any links/URLs at the end. The system will append the signature automatically. End the email body strictly with the final sentence's punctuation.
 
 Resume Context:
-{resume_text[:2000]}
+{resume_text[:12000]}
+{f"\nProject Details:\n{project_details}" if project_details else ""}
 
 Original Email (MAY contain a signature, ignore it):
 {original_body}
 
 Return ONLY the rewritten email body text. No subject line. No explanations."""
 
-    result_body = call_gemini(prompt, json_mode=False, temperature=0.7).strip()
+    result_body = call_gemini(prompt, json_mode=False, temperature=0.3).strip()
 
     if sender_name:
         signature = f"\n\nBest regards,\n{sender_name}"
@@ -484,7 +552,7 @@ My Quick Instructions / Answers for the Reply:
 {user_instructions}
 
 My Resume Context (for any additional info if needed):
-{resume_text[:2000]}
+{resume_text[:12000]}
 
 Task: Draft the email reply body answering the HR's questions directly using my instructions. Keep it polite, professional, and concise.
 DO NOT use HTML tags like <br>. Use literal newline characters for spacing.
