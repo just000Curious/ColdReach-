@@ -39,6 +39,7 @@ export default function JobSearch({ activeProfile, resumeText, onDraftCreated, t
         portfolio_url: activeProfile.portfolio || "",
         linkedin_url: activeProfile.linkedin || "",
         override_title: job.title,
+        tone: "Natural and conversational builder",
       });
 
       const appRes = await addApplication({

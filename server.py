@@ -69,7 +69,7 @@ class ColdMailRequest(BaseModel):
     github_url: str = ""
     portfolio_url: str = ""
     linkedin_url: str = ""
-    tone: str = "Professional and direct"
+    tone: str = "Natural and conversational builder"
 
 class JDRequest(BaseModel):
     resume_text: str
@@ -80,7 +80,7 @@ class JDRequest(BaseModel):
     linkedin_url: str = ""
     override_email: str = ""
     override_title: str = ""
-    tone: str = "Professional and direct"
+    tone: str = "Natural and conversational builder"
 
 class PosterRequest(BaseModel):
     resume_text: str
@@ -90,12 +90,14 @@ class PosterRequest(BaseModel):
     linkedin_url: str = ""
     override_email: str = ""
     override_title: str = ""
-    tone: str = "Professional and direct"
+    tone: str = "Natural and conversational builder"
 
 class FollowUpRequest(BaseModel):
     original_body: str
     company: str
-    hr_name: str = "Hiring Manager"
+    hr_name: str = ""
+    app_type: str = "Cold Email"
+    role: str = ""
     sender_name: str = ""
     github_url: str = ""
     portfolio_url: str = ""
@@ -373,7 +375,7 @@ async def gen_poster(
     linkedin_url: str = Form(""),
     override_email: str = Form(""),
     override_title: str = Form(""),
-    tone: str = Form("Professional and direct"),
+    tone: str = Form("Natural and conversational builder"),
 ):
     try:
         img_bytes = await file.read()
@@ -414,8 +416,15 @@ async def gen_poster(
 def gen_followup(req: FollowUpRequest):
     try:
         text = generate_follow_up(
-            req.original_body, req.company, req.hr_name,
-            req.sender_name, req.github_url, req.portfolio_url, req.linkedin_url
+            original_body=req.original_body,
+            company=req.company,
+            hr_name=req.hr_name,
+            app_type=req.app_type,
+            role=req.role,
+            sender_name=req.sender_name,
+            github_url=req.github_url,
+            portfolio_url=req.portfolio_url,
+            linkedin_url=req.linkedin_url,
         )
         return {"body": text}
     except Exception as e:

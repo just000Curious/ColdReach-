@@ -5,7 +5,7 @@ export default function FromJD({ profile, resumeText, onDraftCreated, toast, set
   const [jdText, setJdText] = useState("");
   const [overrideEmail, setOverrideEmail] = useState("");
   const [overrideTitle, setOverrideTitle] = useState("");
-  const [tone, setTone] = useState("Professional and direct");
+  const [tone, setTone] = useState("Natural and conversational builder");
   const [showOverride, setShowOverride] = useState(false);
   const [error, setError] = useState("");
   const [extracted, setExtracted] = useState(null);
@@ -112,11 +112,11 @@ export default function FromJD({ profile, resumeText, onDraftCreated, toast, set
       <div className="form-group" style={{ marginBottom: 16 }}>
         <label className="form-label">Tone / Style</label>
         <select className="form-input" value={tone} onChange={(e) => setTone(e.target.value)}>
+          <option value="Natural and conversational builder">Natural &amp; Conversational Builder (Recommended)</option>
+          <option value="Short and punchy">Short &amp; Punchy (Under 75 words)</option>
+          <option value="Curious and problem-focused">Curious &amp; Problem-Focused</option>
           <option value="Professional and direct">Professional and direct</option>
           <option value="Enthusiastic and passionate">Enthusiastic and passionate</option>
-          <option value="Casual and conversational">Casual and conversational</option>
-          <option value="Bold and confident">Bold and confident</option>
-          <option value="Short and to the point">Short and to the point</option>
         </select>
       </div>
 

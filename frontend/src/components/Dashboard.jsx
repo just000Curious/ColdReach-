@@ -189,10 +189,23 @@ export default function Dashboard({ apps, onRefresh, toast, setGlobalLoading, re
     const e = getEdit(app);
     setGlobalLoading(true);
     try {
+      let hrName = "";
+      const match = (e.body || "").match(/^(?:Hi|Hey)\s+([A-Za-z]+),/);
+      if (match && !["team", "there"].includes(match[1].toLowerCase())) {
+        hrName = match[1];
+      } else if (e.email && !e.email.startsWith("careers@") && !e.email.startsWith("hr@") && !e.email.startsWith("jobs@") && !e.email.startsWith("recruitment@") && !e.email.startsWith("info@")) {
+        const prefix = e.email.split("@")[0].split(".")[0];
+        if (prefix && prefix.length > 2 && /^[a-zA-Z]+$/.test(prefix)) {
+          hrName = prefix.charAt(0).toUpperCase() + prefix.slice(1).toLowerCase();
+        }
+      }
+
       const { body: fuBody } = await generateFollowUp({
         original_body: e.body,
         company: app.company,
-        hr_name: "Hiring Manager",
+        hr_name: hrName,
+        app_type: app.type || "Cold Email",
+        role: app.role || "",
         sender_name: profile?.name || "",
         github_url: profile?.github || "",
         portfolio_url: profile?.portfolio || "",

@@ -47,7 +47,7 @@ export default function Sidebar({ profilesData, setProfilesData, resumeReady, se
         company: lead.company,
         role: lead.role,
         email: lead.hr_email,
-        subject: `Application for ${lead.role} - ${activeProfile.name}`,
+        subject: `quick question re: ${lead.role} at ${lead.company}`,
         body: ""
       });
       const appId = appRes.id;
@@ -61,13 +61,13 @@ export default function Sidebar({ profilesData, setProfilesData, resumeReady, se
         github_url: activeProfile.github,
         portfolio_url: activeProfile.portfolio,
         linkedin_url: activeProfile.linkedin,
-        tone: "Professional and direct"
+        tone: "Natural and conversational builder"
       });
 
       // 3. Update application with generated body
       await updateApplication(appId, {
         body: genRes.body,
-        subject: genRes.subject || `Application for ${lead.role}`
+        subject: genRes.subject || `quick question re: ${lead.role}`
       });
 
       toast(`Draft created for ${lead.company}!`, "success");
